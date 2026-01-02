@@ -17,13 +17,16 @@
         @keyframes popIn { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
         .app-header-date { background: #fff; padding: 15px 20px 5px 20px; font-weight: bold; color: #555; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
         .profile-header { display: flex; align-items: center; margin-bottom: 20px; margin-top: 10px; }
-        .profile-img-lg { width: 75px; height: 75px; border-radius: 50%; object-fit: cover; border: 3px solid #0d6efd; margin-left: 15px; background: #eee; }
+        .profile-info { flex-grow: 1; }
+        .profile-img-lg { width: 75px; height: 75px; border-radius: 50%; object-fit: cover; border: 3px solid #0d6efd; margin-left: 15px; background: #eee; cursor: pointer; }
         .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; margin-bottom: 30px; }
         .menu-item { background: #fff; border: 1px solid #f0f0f0; border-radius: 15px; height: 95px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
         .menu-item:active { transform: scale(0.95); background: #f8f9fa; }
         .menu-item i { font-size: 24px; margin-bottom: 8px; }
         .menu-item span { font-size: 10px; font-weight: 700; color: #555; }
         .app-footer { background: #f8f9fa; padding: 15px; text-align: center; border-top: 1px solid #eee; margin-top: auto; }
+        .app-footer h6 { font-size: 12px; font-weight: bold; margin: 0; color: #0d6efd; }
+        .app-footer small { font-size: 10px; color: #888; }
         .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); z-index: 2000; display: none; align-items: center; justify-content: center; flex-direction: column; }
         .card-custom { border:none; border-radius:15px; box-shadow:0 2px 10px rgba(0,0,0,0.03); margin-bottom:10px; }
         .chat-bubble { padding: 10px 15px; border-radius: 15px; margin-bottom: 8px; max-width: 80%; font-size: 12px; }
@@ -72,10 +75,10 @@
         <form id="formEdit">
             <div class="text-center mb-3"><img src="" id="editFotoPreview" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #ddd;"><div class="mt-3"><label class="btn btn-outline-primary btn-sm rounded-pill"><i class="fas fa-camera me-1"></i> Ganti Foto (Lokal)<input type="file" id="fileFoto" accept="image/*" style="display: none;" onchange="saveImageLocal(this)"></label></div></div>
             <div class="mb-2"><input type="text" class="form-control bg-light" id="editUsername" readonly></div>
-            <div class="mb-2"><input type="text" class="form-control" id="editPass" required></div>
+            <div class="mb-2"><input type="text" class="form-control" id="editPass" placeholder="Password" required></div>
             <div class="mb-2"><input type="text" class="form-control bg-light" id="viewNama" readonly></div>
             <div class="row"><div class="col-6 mb-2"><select class="form-select" id="editJK"><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div><div class="col-6 mb-2"><input type="text" class="form-control" id="editInfo"></div></div>
-            <div class="mb-2"><input type="text" class="form-control" id="editAlamat"></div><div class="mb-2"><input type="number" class="form-control" id="editHP"></div>
+            <div class="mb-2"><input type="text" class="form-control" id="editAlamat" placeholder="Alamat"></div><div class="mb-2"><input type="number" class="form-control" id="editHP" placeholder="No HP"></div>
             <button type="submit" class="btn btn-success w-100 py-3 rounded-4 fw-bold mt-4 shadow">SIMPAN DATA</button>
         </form>
     </div>
@@ -90,9 +93,10 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // ===========================================
-    // PASTE URL SCRIPT ANDA DI SINI
+    // !!! PASTE URL GOOGLE SCRIPT ANDA DI BAWAH INI !!!
     // ===========================================
-    const API_URL = "TEMPEL_URL_GOOGLE_APPS_SCRIPT_DISINI"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbzbcXELSlu1SLwLOgNTBuUJj0u98NEQJjweb7yRO9Ja87vSjyAaIHVU4SXNxpBLi_s/exec"; 
+    // ===========================================
 
     let currentUser = null;
     document.getElementById('headerDate').innerText = new Date().toLocaleDateString('id-ID', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -108,12 +112,36 @@
     function showScreen(id) { document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id==='screen-profile') loadProfileData(); }
     function setLoading(a) { document.getElementById('loader').style.display = a ? 'flex' : 'none'; }
 
+    // LOGIN DENGAN PENGECEKAN URL
     document.getElementById('formLogin').addEventListener('submit', function(e) {
-        e.preventDefault(); setLoading(true);
+        e.preventDefault(); 
+        
+        // Cek apakah User lupa menempel URL
+        if(API_URL.includes("TEMPEL_URL") || API_URL === "") {
+            alert("ERROR: URL Google Script belum ditempel di kode HTML! Silakan edit file index.html di baris 112.");
+            return;
+        }
+
+        setLoading(true);
         fetch(`${API_URL}?action=login&username=${document.getElementById('uName').value}&password=${document.getElementById('uPass').value}`)
-        .then(r=>r.json()).then(res => { setLoading(false);
-            if(res.status==='success') { currentUser=res.data; currentUser.role=res.role; showPopup("Selamat Datang!", `Halo, ${currentUser.nama}.`, "fas fa-smile-beam text-primary", function(){ initDashboard(); showScreen('screen-dashboard'); }); }
+        .then(r => {
+            // Cek jika response bukan JSON (Tanda URL salah/Deployment salah)
+            if(!r.ok || !r.headers.get("content-type")?.includes("json")) {
+                throw new Error("Gagal terhubung ke Database. Cek Deployment (Harus 'Anyone').");
+            }
+            return r.json();
+        })
+        .then(res => { 
+            setLoading(false);
+            if(res.status==='success') { 
+                currentUser=res.data; currentUser.role=res.role; 
+                showPopup("Selamat Datang!", `Halo, ${currentUser.nama}.`, "fas fa-smile-beam text-primary", function(){ initDashboard(); showScreen('screen-dashboard'); }); 
+            }
             else { alert(res.message); }
+        })
+        .catch(err => {
+            setLoading(false);
+            alert("Koneksi Error: " + err.message);
         });
     });
 
@@ -130,7 +158,7 @@
         document.getElementById('menuContainer').innerHTML=h; window.menus=menus;
     }
 
-    // --- RUANG IDE (FIX) ---
+    // --- 1. RUANG IDE (FIX) ---
     function openIde() {
         let isGuru = currentUser.role==='Guru';
         let form = isGuru ? '' : `<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Tulis Ide</h6><input type="date" id="iTgl" class="form-control mb-2"><input type="text" id="iJdl" class="form-control mb-2" placeholder="Judul"><textarea id="iDesk" class="form-control mb-2" rows="3" placeholder="Isi ide..."></textarea><button class="btn btn-warning w-100 fw-bold" onclick="kirimIde()">KIRIM</button></div>`;
@@ -148,7 +176,7 @@
     function replyIde(id){ let val=document.getElementById('rep_'+id).value; if(!val)return; fetch(`${API_URL}?action=respon_ide&id_post=${id}&balasan=${val}`).then(r=>r.json()).then(d=>{alert(d.message);loadIde();}); }
     function hapusIde(id){ if(confirm("Hapus?")) fetch(`${API_URL}?action=hapus_ide&id_post=${id}&username=${currentUser.username}`).then(r=>r.json()).then(d=>{alert(d.message);loadIde();}); }
 
-    // --- RUANG RASA (FIX) ---
+    // --- 2. RUANG RASA (FIX) ---
     function openRasa() {
         if(currentUser.role==='Orangtua'){alert("Maaf, Ruang Rasa khusus Siswa."); return;}
         let isGuru = currentUser.role==='Guru';
@@ -168,7 +196,31 @@
     function replyRasa(id){ let val=document.getElementById('repr_'+id).value; if(!val)return; fetch(`${API_URL}?action=respon_rasa&id_post=${id}&balasan=${val}`).then(r=>r.json()).then(d=>{alert(d.message);loadRasa();}); }
     function hapusRasa(id){ if(confirm("Hapus?")) fetch(`${API_URL}?action=hapus_rasa&id_post=${id}&username=${currentUser.username}`).then(r=>r.json()).then(d=>{alert(d.message);loadRasa();}); }
 
-    // --- RUANG KONSELING (FIX) ---
+    // --- 3 & 4. ASPIRASI & EVALUASI ---
+    function openAspirasi() { openAspEval('Aspirasi', 'simpan_aspirasi', 'get_aspirasi', 'success'); }
+    function openEvaluasi() { openAspEval('Evaluasi', 'simpan_evaluasi', 'get_evaluasi', 'danger'); }
+    function openAspEval(n, s, g, c) {
+        let isGuru=currentUser.role==='Guru';
+        let form=isGuru?`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Input ${n}</h6><input type="date" id="aTgl" class="form-control mb-2"><select id="aSis" class="form-select mb-2"></select><input type="text" id="aJdl" class="form-control mb-2" placeholder="${n=='Aspirasi'?'Karakter':'Perihal'}"><textarea id="aDesk" class="form-control mb-2" rows="2"></textarea>${n=='Aspirasi'?'<div class="form-check mb-2"><input type="checkbox" id="aPub" class="form-check-input" checked><label class="small">Publik</label></div>':''}<button class="btn btn-${c} w-100" onclick="krmAspEval('${s}','${n}')">SIMPAN</button></div>`:'';
+        renderPage(`Ruang ${n}`, `${form}<div id="list-aspeval">Loading...</div>`);
+        if(isGuru) loadSiswaList('aSis'); loadCard(g, 'list-aspeval', `border-${c}`);
+    }
+    function krmAspEval(act, n) { 
+        let d={nama_guru:currentUser.nama, nama_siswa:getVal('aSis'), tanggal:getVal('aTgl'), deskripsi:getVal('aDesk')};
+        if(n=='Aspirasi'){d.karakter=getVal('aJdl'); d.publik=document.getElementById('aPub').checked?"Ya":"Tidak";} else {d.perihal=getVal('aJdl');}
+        submitGeneral(act, d, ()=>loadCard(n=='Aspirasi'?'get_aspirasi':'get_evaluasi', 'list-aspeval', n=='Aspirasi'?'border-success':'border-danger'));
+    }
+
+    // --- 5. RUANG ORANGTUA ---
+    function openOrtu() {
+        let isOrtu=currentUser.role==='Orangtua';
+        let form=isOrtu?`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Info ke Guru</h6><input type="date" id="oTgl" class="form-control mb-2"><select id="oTuj" class="form-select mb-2"></select><input type="text" id="oJdl" class="form-control mb-2" placeholder="Judul"><textarea id="oDesk" class="form-control mb-2" rows="2"></textarea><button class="btn btn-info w-100 text-white" onclick="krmOrtu()">KIRIM</button></div>`:'';
+        renderPage("Ruang Orangtua", `${form}<div id="list-ortu">Loading...</div>`);
+        if(isOrtu) loadGuruList('oTuj'); loadCard('get_info_ortu', 'list-ortu', 'border-info');
+    }
+    function krmOrtu(){ submitGeneral("simpan_info_ortu", {nama_siswa:currentUser.info, tanggal:getVal('oTgl'), judul:getVal('oJdl'), deskripsi:getVal('oDesk'), tujuan:getVal('oTuj')}, ()=>loadCard('get_info_ortu','list-ortu','border-info')); }
+
+    // --- 6. RUANG KONSELING (FIX) ---
     function openKonseling() {
         let isGuru=currentUser.role==='Guru';
         let form=isGuru?'':`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Buat Janji BK</h6><select id="kTuj" class="form-select mb-2"></select><input type="text" id="kWkt" class="form-control mb-2" placeholder="Hari, Tgl, Jam"><textarea id="kPerlu" class="form-control mb-2" rows="2" placeholder="Keperluan"></textarea><button class="btn btn-primary w-100" onclick="krmKonsel()">AJUKAN</button></div>`;
@@ -185,18 +237,14 @@
     }); }
     function respKonsel(id, st){ let msg=prompt("Pesan tambahan (Lokasi/Info):", "Silakan datang ke ruang BK"); if(!msg)return; fetch(`${API_URL}?action=respon_konseling&id_post=${id}&status=${st}&balasan=${msg}`).then(r=>r.json()).then(d=>{alert(d.message);loadKonsel();}); }
 
-    // --- LAINNYA ---
-    function openAspirasi() { openAspEval('Aspirasi', 'simpan_aspirasi', 'get_aspirasi', 'success'); }
-    function openEvaluasi() { openAspEval('Evaluasi', 'simpan_evaluasi', 'get_evaluasi', 'danger'); }
-    function openAspEval(n, s, g, c) { let isGuru=currentUser.role==='Guru'; let form=isGuru?`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Input ${n}</h6><input type="date" id="aTgl" class="form-control mb-2"><select id="aSis" class="form-select mb-2"></select><input type="text" id="aJdl" class="form-control mb-2" placeholder="${n=='Aspirasi'?'Karakter':'Perihal'}"><textarea id="aDesk" class="form-control mb-2" rows="2"></textarea>${n=='Aspirasi'?'<div class="form-check mb-2"><input type="checkbox" id="aPub" class="form-check-input" checked><label class="small">Publik</label></div>':''}<button class="btn btn-${c} w-100" onclick="krmAspEval('${s}','${n}')">SIMPAN</button></div>`:''; renderPage(`Ruang ${n}`, `${form}<div id="list-aspeval">Loading...</div>`); if(isGuru) loadSiswaList('aSis'); loadCard(g, 'list-aspeval', `border-${c}`); }
-    function krmAspEval(act, n) { let d={nama_guru:currentUser.nama, nama_siswa:getVal('aSis'), tanggal:getVal('aTgl'), deskripsi:getVal('aDesk')}; if(n=='Aspirasi'){d.karakter=getVal('aJdl'); d.publik=document.getElementById('aPub').checked?"Ya":"Tidak";} else {d.perihal=getVal('aJdl');} submitGeneral(act, d, ()=>loadCard(n=='Aspirasi'?'get_aspirasi':'get_evaluasi', 'list-aspeval', n=='Aspirasi'?'border-success':'border-danger')); }
-    function openOrtu() { let isOrtu=currentUser.role==='Orangtua'; let form=isOrtu?`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Info ke Guru</h6><input type="date" id="oTgl" class="form-control mb-2"><select id="oTuj" class="form-select mb-2"></select><input type="text" id="oJdl" class="form-control mb-2" placeholder="Judul"><textarea id="oDesk" class="form-control mb-2" rows="2"></textarea><button class="btn btn-info w-100 text-white" onclick="krmOrtu()">KIRIM</button></div>`:''; renderPage("Ruang Orangtua", `${form}<div id="list-ortu">Loading...</div>`); if(isOrtu) loadGuruList('oTuj'); loadCard('get_info_ortu', 'list-ortu', 'border-info'); }
-    function krmOrtu(){ submitGeneral("simpan_info_ortu", {nama_siswa:currentUser.info, tanggal:getVal('oTgl'), judul:getVal('oJdl'), deskripsi:getVal('oDesk'), tujuan:getVal('oTuj')}, ()=>loadCard('get_info_ortu','list-ortu','border-info')); }
+    // --- SHARED UTILS ---
     function getVal(id){return document.getElementById(id).value;}
     function submitGeneral(act, data, cb){ setLoading(true); data.action=act; data.username=currentUser.username; data.role=currentUser.role; data.nama=currentUser.nama; const p=new URLSearchParams(data); fetch(API_URL+"?"+p).then(r=>r.json()).then(res=>{setLoading(false);alert(res.message);if(cb)cb();}); }
     function loadGuruList(id) { fetch(API_URL+"?action=get_list_guru").then(r=>r.json()).then(d=>{let o='<option>Pilih Guru...</option>';d.data.forEach(g=>o+=`<option>${g}</option>`);document.getElementById(id).innerHTML=o;}); }
     function loadSiswaList(id) { fetch(API_URL+"?action=get_list_siswa").then(r=>r.json()).then(d=>{let o='<option value="">Pilih Siswa...</option>';d.data.forEach(s=>o+=`<option>${s}</option>`);document.getElementById(id).innerHTML=o;}); }
     function loadCard(a,el,c) { document.getElementById(el).innerHTML='Loading...'; const p=new URLSearchParams({action:a, role:currentUser.role, nama:currentUser.nama, info:currentUser.info, username:currentUser.username}); fetch(API_URL+"?"+p).then(r=>r.json()).then(res=>{let h=res.data.length?'':'<div class="text-center text-muted mt-3">Kosong.</div>';res.data.forEach(d=>{h+=`<div class="card ${c} mb-2 p-3 shadow-sm rounded-4"><strong>${d.pengirim||d.anak}</strong><small>${d.judul}</small><p class="small text-muted m-0">${d.deskripsi}</p></div>`});document.getElementById(el).innerHTML=h;}); }
+    
+    // --- FITUR LAIN (SIMPLE) ---
     function openChat() { renderPage("Ruang Chat", `<div id="chat-contact-view"><p class="small text-muted mb-2">Pilih kontak:</p><div id="chat-contacts" class="list-group">Loading...</div></div><div id="chat-room-view" style="display:none;"><div class="d-flex align-items-center mb-3 p-2 bg-light rounded"><button class="btn btn-sm btn-secondary me-2" onclick="closeChatRoom()"><i class="fas fa-times"></i></button><strong id="chat-partner-name">Nama</strong></div><div id="chat-messages" style="height:300px;overflow-y:auto;background:#fff;border:1px solid #eee;border-radius:10px;padding:10px;mb-2"></div><div class="input-group mt-2"><input type="text" class="form-control" id="chat-input" placeholder="Tulis..."><button class="btn btn-primary" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button></div></div>`); fetch(`${API_URL}?action=get_chat_contacts&role=${currentUser.role}`).then(r=>r.json()).then(res=>{let h='';res.data.forEach(c=>h+=`<button class="list-group-item list-group-item-action" onclick="openChatRoom('${c}')"><i class="fas fa-user-circle me-2"></i> ${c}</button>`);document.getElementById('chat-contacts').innerHTML=h;}); }
     let chatPartner=''; function openChatRoom(n){chatPartner=n;document.getElementById('chat-contact-view').style.display='none';document.getElementById('chat-room-view').style.display='block';document.getElementById('chat-partner-name').innerText=n;loadMessages();} function closeChatRoom(){document.getElementById('chat-contact-view').style.display='block';document.getElementById('chat-room-view').style.display='none';} function loadMessages(){document.getElementById('chat-messages').innerHTML='<small>Loading...</small>';fetch(`${API_URL}?action=get_chat&user1=${currentUser.nama}&user2=${chatPartner}`).then(r=>r.json()).then(res=>{let h='';res.data.forEach(m=>{let c=m.sender===currentUser.nama?'chat-me':'chat-other';h+=`<div class="d-flex flex-column"><div class="chat-bubble ${c}">${m.message}</div></div>`;});document.getElementById('chat-messages').innerHTML=h;});} function sendChat(){let m=document.getElementById('chat-input').value;if(!m)return;fetch(`${API_URL}?action=simpan_chat&sender=${currentUser.nama}&receiver=${chatPartner}&message=${m}`).then(()=>{document.getElementById('chat-input').value='';loadMessages();});}
     function openMood() { renderPage("Mood & Kesan", `<div class="text-center mb-4"><p class="small text-muted">Bagaimana perasaanmu?</p><div class="d-flex justify-content-center gap-3 mb-3"><i class="mood-icon fas fa-laugh-beam text-success" onclick="selMood(this,'Senang')"></i><i class="mood-icon fas fa-meh text-warning" onclick="selMood(this,'Biasa')"></i><i class="mood-icon fas fa-frown text-danger" onclick="selMood(this,'Sedih')"></i><i class="mood-icon fas fa-tired text-secondary" onclick="selMood(this,'Lelah')"></i></div><input type="hidden" id="f_mood"><input type="text" class="form-control mb-3 text-center" id="f_kesan" placeholder="Tulis kesan singkat..." required><button class="btn btn-primary w-100 rounded-pill" onclick="submitMood()">UPDATE STATUS</button></div><hr>${currentUser.role==='Guru'?'<h6 class="fw-bold small">Mood Siswa</h6><div id="list-mood-guru"></div>':''}`); if(currentUser.role==='Guru') loadMoodGuru(); }
@@ -204,6 +252,7 @@
     function openPublicList(t,n,i) { renderPage(n, `<div id="list-public">Loading...</div>`); fetch(`${API_URL}?action=get_public_data&type=${t}`).then(r=>r.json()).then(res=>{let h=res.data.length?'':'<div class="text-center text-muted mt-5">Kosong.</div>';res.data.forEach(d=>{h+=`<div class="card card-custom p-3"><div class="d-flex align-items-center mb-2"><i class="fas ${i} fa-lg me-3 text-secondary"></i><h6 class="fw-bold m-0">${d.col1}</h6></div><p class="small text-muted">${d.col2}</p><small class="text-primary">${d.col3.includes('http')?`<a href="${d.col3}" target="_blank">Buka Link</a>`:d.col3}</small></div>`});document.getElementById('list-public').innerHTML=h;}); }
     function openDiskusi() { renderPage("Ruang Diskusi", `<div class="mb-3"><textarea class="form-control mb-2" id="diskusi-konten" rows="2" placeholder="Apa yang Anda pikirkan?"></textarea><button class="btn btn-primary btn-sm w-100" onclick="postDiskusi()">POSTING</button></div><div id="list-diskusi"></div>`); loadDiskusi(); }
     function postDiskusi(){let c=document.getElementById('diskusi-konten').value;if(!c)return;setLoading(true);fetch(`${API_URL}?action=simpan_diskusi&nama=${currentUser.nama}&role=${currentUser.role}&konten=${c}`).then(r=>r.json()).then(res=>{setLoading(false);document.getElementById('diskusi-konten').value='';loadDiskusi();});} function loadDiskusi(){document.getElementById('list-diskusi').innerHTML='Loading...';fetch(`${API_URL}?action=get_diskusi`).then(r=>r.json()).then(res=>{let h='';res.data.forEach(d=>{let del=d.nama===currentUser.nama?`<button class="btn btn-link text-danger btn-sm p-0 ms-2" onclick="hapusDiskusi('${d.id}')">Hapus</button>`:'';h+=`<div class="card card-custom p-3 mb-2"><div class="d-flex justify-content-between"><small class="fw-bold text-primary">${d.nama}</small><small class="text-muted" style="font-size:10px;">${d.waktu.substring(0,10)}</small></div><p class="mb-2 mt-1 small">${d.konten}</p><div class="d-flex align-items-center"><i class="far fa-heart text-danger me-1"></i> <small>${d.likes}</small> ${del}</div></div>`});document.getElementById('list-diskusi').innerHTML=h;});} function hapusDiskusi(id){if(!confirm("Hapus?"))return;fetch(`${API_URL}?action=hapus_diskusi&id_post=${id}&nama=${currentUser.nama}`).then(r=>r.json()).then(res=>{alert(res.message);loadDiskusi();});}
+
     function renderPage(title, content) { document.getElementById('pageTitle').innerText = title; document.getElementById('pageContent').innerHTML = content; showScreen('screen-generic'); }
     function loadProfileData() { document.getElementById('editUsername').value=currentUser.username; document.getElementById('editPass').value=currentUser.password; document.getElementById('viewNama').value=currentUser.nama; document.getElementById('editJK').value=currentUser.jk; document.getElementById('editInfo').value=currentUser.info; document.getElementById('editAlamat').value=currentUser.alamat; document.getElementById('editHP').value=currentUser.hp; document.getElementById('editFotoPreview').src=localStorage.getItem('img_'+currentUser.username)||"https://via.placeholder.com/150"; }
     function saveImageLocal(input) { if (input.files && input.files[0]) { let file = input.files[0]; var reader = new FileReader(); reader.onload = function (e) { try { localStorage.setItem('img_' + currentUser.username, e.target.result); document.getElementById('editFotoPreview').src = e.target.result; alert("Foto tersimpan di HP ini!"); } catch (err) { alert("Memori Penuh/Gagal Simpan"); } }; reader.readAsDataURL(file); } }
