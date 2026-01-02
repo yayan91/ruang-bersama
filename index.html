@@ -62,7 +62,12 @@
 
     <div id="screen-dashboard" class="screen">
         <div class="profile-header">
-            <div style="flex-grow:1"><h5 class="fw-bold m-0 text-dark" id="dashNama">User</h5><span class="badge bg-primary" id="dashRole">Role</span><small class="d-block fw-bold text-secondary mt-1" id="dashInfo">-</small><small class="d-block text-muted text-truncate mt-1" id="dashKesan">...</small></div>
+            <div class="profile-info">
+                <h5 class="fw-bold m-0 text-dark" id="dashNama">User</h5>
+                <span class="badge bg-primary" id="dashRole">Role</span>
+                <small class="d-block fw-bold text-secondary mt-1" id="dashInfo" style="font-size: 11px;">-</small>
+                <small class="d-block text-muted text-truncate mt-1" id="dashKesan">...</small>
+            </div>
             <img src="https://via.placeholder.com/150" id="dashFoto" class="profile-img-lg shadow-sm">
         </div>
         <div class="card bg-primary text-white border-0 shadow-sm mb-3 rounded-4" style="background: linear-gradient(135deg, #0d6efd, #0056b3);"><div class="card-body py-3 d-flex justify-content-between align-items-center"><div><h5 class="fw-bold m-0">13 RUANG</h5><small class="opacity-75">Aktivitas & Layanan</small></div><i class="fas fa-school fa-2x opacity-50"></i></div></div>
@@ -93,10 +98,9 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // ===========================================
-    // !!! PASTE URL GOOGLE SCRIPT ANDA DI BAWAH INI !!!
+    // PASTE URL SCRIPT ANDA DI SINI
     // ===========================================
     const API_URL = "https://script.google.com/macros/s/AKfycbzbcXELSlu1SLwLOgNTBuUJj0u98NEQJjweb7yRO9Ja87vSjyAaIHVU4SXNxpBLi_s/exec"; 
-    // ===========================================
 
     let currentUser = null;
     document.getElementById('headerDate').innerText = new Date().toLocaleDateString('id-ID', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -112,41 +116,26 @@
     function showScreen(id) { document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id==='screen-profile') loadProfileData(); }
     function setLoading(a) { document.getElementById('loader').style.display = a ? 'flex' : 'none'; }
 
-    // LOGIN DENGAN PENGECEKAN URL
     document.getElementById('formLogin').addEventListener('submit', function(e) {
-        e.preventDefault(); 
-        
-        // Cek apakah User lupa menempel URL
-        if(API_URL.includes("TEMPEL_URL") || API_URL === "") {
-            alert("ERROR: URL Google Script belum ditempel di kode HTML! Silakan edit file index.html di baris 112.");
-            return;
-        }
-
-        setLoading(true);
+        e.preventDefault(); setLoading(true);
         fetch(`${API_URL}?action=login&username=${document.getElementById('uName').value}&password=${document.getElementById('uPass').value}`)
-        .then(r => {
-            // Cek jika response bukan JSON (Tanda URL salah/Deployment salah)
-            if(!r.ok || !r.headers.get("content-type")?.includes("json")) {
-                throw new Error("Gagal terhubung ke Database. Cek Deployment (Harus 'Anyone').");
-            }
-            return r.json();
-        })
-        .then(res => { 
-            setLoading(false);
-            if(res.status==='success') { 
-                currentUser=res.data; currentUser.role=res.role; 
-                showPopup("Selamat Datang!", `Halo, ${currentUser.nama}.`, "fas fa-smile-beam text-primary", function(){ initDashboard(); showScreen('screen-dashboard'); }); 
-            }
+        .then(r=>r.json()).then(res => { setLoading(false);
+            if(res.status==='success') { currentUser=res.data; currentUser.role=res.role; showPopup("Selamat Datang!", `Halo, ${currentUser.nama}.`, "fas fa-smile-beam text-primary", function(){ initDashboard(); showScreen('screen-dashboard'); }); }
             else { alert(res.message); }
-        })
-        .catch(err => {
-            setLoading(false);
-            alert("Koneksi Error: " + err.message);
         });
     });
 
     function initDashboard() {
-        document.getElementById('dashNama').innerText=currentUser.nama; document.getElementById('dashRole').innerText=currentUser.role; document.getElementById('dashInfo').innerText=currentUser.info||"-"; document.getElementById('dashKesan').innerText=currentUser.kesan||"";
+        document.getElementById('dashNama').innerText=currentUser.nama; document.getElementById('dashRole').innerText=currentUser.role; 
+        
+        // LOGIKA INFO ORANGTUA
+        if(currentUser.role === 'Orangtua') {
+            document.getElementById('dashInfo').innerHTML = `<i class="fas fa-child text-primary"></i> ${currentUser.info_display}`;
+        } else {
+            document.getElementById('dashInfo').innerText=currentUser.info_display||"-";
+        }
+        
+        document.getElementById('dashKesan').innerText=currentUser.kesan||"";
         let lf=localStorage.getItem('img_'+currentUser.username); document.getElementById('dashFoto').src=lf||"https://via.placeholder.com/150";
         const menus=[
             {n:"Ruang Ide", i:"fa-lightbulb", c:"#ffc107", f:openIde}, {n:"Ruang Rasa", i:"fa-heart", c:"#dc3545", f:openRasa}, {n:"Aspirasi", i:"fa-star", c:"#28a745", f:openAspirasi}, {n:"Evaluasi", i:"fa-exclamation-triangle", c:"#fd7e14", f:openEvaluasi},
@@ -211,14 +200,14 @@
         submitGeneral(act, d, ()=>loadCard(n=='Aspirasi'?'get_aspirasi':'get_evaluasi', 'list-aspeval', n=='Aspirasi'?'border-success':'border-danger'));
     }
 
-    // --- 5. RUANG ORANGTUA ---
+    // --- 5. RUANG ORANGTUA (FIX LINK USERNAME) ---
     function openOrtu() {
         let isOrtu=currentUser.role==='Orangtua';
-        let form=isOrtu?`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Info ke Guru</h6><input type="date" id="oTgl" class="form-control mb-2"><select id="oTuj" class="form-select mb-2"></select><input type="text" id="oJdl" class="form-control mb-2" placeholder="Judul"><textarea id="oDesk" class="form-control mb-2" rows="2"></textarea><button class="btn btn-info w-100 text-white" onclick="krmOrtu()">KIRIM</button></div>`:'';
+        let form=isOrtu?`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Info ke Guru</h6><div class="alert alert-info py-2 small mb-2"><i class="fas fa-user-graduate"></i> Anak: <strong>${currentUser.info_display}</strong></div><input type="date" id="oTgl" class="form-control mb-2"><select id="oTuj" class="form-select mb-2"></select><input type="text" id="oJdl" class="form-control mb-2" placeholder="Judul Info"><textarea id="oDesk" class="form-control mb-2" rows="2" placeholder="Deskripsi Perkembangan..."></textarea><button class="btn btn-info w-100 text-white" onclick="krmOrtu()">KIRIM</button></div>`:'';
         renderPage("Ruang Orangtua", `${form}<div id="list-ortu">Loading...</div>`);
         if(isOrtu) loadGuruList('oTuj'); loadCard('get_info_ortu', 'list-ortu', 'border-info');
     }
-    function krmOrtu(){ submitGeneral("simpan_info_ortu", {nama_siswa:currentUser.info, tanggal:getVal('oTgl'), judul:getVal('oJdl'), deskripsi:getVal('oDesk'), tujuan:getVal('oTuj')}, ()=>loadCard('get_info_ortu','list-ortu','border-info')); }
+    function krmOrtu(){ submitGeneral("simpan_info_ortu", {nama_siswa:currentUser.info, username_anak:currentUser.info, tanggal:getVal('oTgl'), judul:getVal('oJdl'), deskripsi:getVal('oDesk'), tujuan:getVal('oTuj')}, ()=>loadCard('get_info_ortu','list-ortu','border-info')); }
 
     // --- 6. RUANG KONSELING (FIX) ---
     function openKonseling() {
