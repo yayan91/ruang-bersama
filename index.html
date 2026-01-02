@@ -62,12 +62,7 @@
 
     <div id="screen-dashboard" class="screen">
         <div class="profile-header">
-            <div class="profile-info">
-                <h5 class="fw-bold m-0 text-dark" id="dashNama">User</h5>
-                <span class="badge bg-primary" id="dashRole">Role</span>
-                <small class="d-block fw-bold text-secondary mt-1" id="dashInfo" style="font-size: 11px;">-</small>
-                <small class="d-block text-muted text-truncate mt-1" id="dashKesan">...</small>
-            </div>
+            <div class="profile-info"><h5 class="fw-bold m-0 text-dark" id="dashNama">User</h5><span class="badge bg-primary" id="dashRole">Role</span><small class="d-block fw-bold text-secondary mt-1" id="dashInfo">-</small><small class="d-block text-muted text-truncate mt-1" id="dashKesan">...</small></div>
             <img src="https://via.placeholder.com/150" id="dashFoto" class="profile-img-lg shadow-sm">
         </div>
         <div class="card bg-primary text-white border-0 shadow-sm mb-3 rounded-4" style="background: linear-gradient(135deg, #0d6efd, #0056b3);"><div class="card-body py-3 d-flex justify-content-between align-items-center"><div><h5 class="fw-bold m-0">13 RUANG</h5><small class="opacity-75">Aktivitas & Layanan</small></div><i class="fas fa-school fa-2x opacity-50"></i></div></div>
@@ -98,11 +93,13 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // ===========================================
-    // PASTE URL SCRIPT ANDA DI SINI
+    // PASTE URL ANDA DI SINI
     // ===========================================
     const API_URL = "https://script.google.com/macros/s/AKfycbzbcXELSlu1SLwLOgNTBuUJj0u98NEQJjweb7yRO9Ja87vSjyAaIHVU4SXNxpBLi_s/exec"; 
 
     let currentUser = null;
+    let currentChildUser = null; // Menyimpan Username Anak yang terverifikasi
+
     document.getElementById('headerDate').innerText = new Date().toLocaleDateString('id-ID', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
     function showPopup(t, m, i, cb) {
@@ -126,16 +123,7 @@
     });
 
     function initDashboard() {
-        document.getElementById('dashNama').innerText=currentUser.nama; document.getElementById('dashRole').innerText=currentUser.role; 
-        
-        // LOGIKA INFO ORANGTUA
-        if(currentUser.role === 'Orangtua') {
-            document.getElementById('dashInfo').innerHTML = `<i class="fas fa-child text-primary"></i> ${currentUser.info_display}`;
-        } else {
-            document.getElementById('dashInfo').innerText=currentUser.info_display||"-";
-        }
-        
-        document.getElementById('dashKesan').innerText=currentUser.kesan||"";
+        document.getElementById('dashNama').innerText=currentUser.nama; document.getElementById('dashRole').innerText=currentUser.role; document.getElementById('dashInfo').innerText=currentUser.info||"-"; document.getElementById('dashKesan').innerText=currentUser.kesan||"";
         let lf=localStorage.getItem('img_'+currentUser.username); document.getElementById('dashFoto').src=lf||"https://via.placeholder.com/150";
         const menus=[
             {n:"Ruang Ide", i:"fa-lightbulb", c:"#ffc107", f:openIde}, {n:"Ruang Rasa", i:"fa-heart", c:"#dc3545", f:openRasa}, {n:"Aspirasi", i:"fa-star", c:"#28a745", f:openAspirasi}, {n:"Evaluasi", i:"fa-exclamation-triangle", c:"#fd7e14", f:openEvaluasi},
@@ -147,93 +135,122 @@
         document.getElementById('menuContainer').innerHTML=h; window.menus=menus;
     }
 
-    // --- 1. RUANG IDE (FIX) ---
-    function openIde() {
-        let isGuru = currentUser.role==='Guru';
-        let form = isGuru ? '' : `<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Tulis Ide</h6><input type="date" id="iTgl" class="form-control mb-2"><input type="text" id="iJdl" class="form-control mb-2" placeholder="Judul"><textarea id="iDesk" class="form-control mb-2" rows="3" placeholder="Isi ide..."></textarea><button class="btn btn-warning w-100 fw-bold" onclick="kirimIde()">KIRIM</button></div>`;
-        renderPage("Ruang Ide", `${form}<div id="list-ide">Loading...</div>`);
-        loadIde();
+    // --- RUANG ORANGTUA (VERIFIKASI PASSWORD ANAK) ---
+    function openOrtu() {
+        let isOrtu = currentUser.role === 'Orangtua';
+        // Form dengan Dropdown Pilihan Anak
+        let form = isOrtu ? `
+            <div class="p-3 bg-light rounded mb-3">
+                <h6 class="fw-bold mb-3">Verifikasi Data Anak</h6>
+                <div class="mb-3">
+                    <label class="small text-muted">Pilih Nama Anak</label>
+                    <select id="pilihAnak" class="form-select" onchange="verifyChild(this)">
+                        <option value="">-- Pilih Anak --</option>
+                    </select>
+                </div>
+                
+                <div id="formInfoOrtu" style="display:none; border-top:1px solid #ccc; paddingTop:15px;">
+                    <div class="alert alert-success small py-2"><i class="fas fa-check-circle"></i> Terhubung: <b id="lblAnak"></b></div>
+                    <input type="date" id="oTgl" class="form-control mb-2">
+                    <select id="oTuj" class="form-select mb-2"></select>
+                    <input type="text" id="oJdl" class="form-control mb-2" placeholder="Judul Info">
+                    <textarea id="oDesk" class="form-control mb-2" rows="2" placeholder="Perkembangan anak..."></textarea>
+                    <button class="btn btn-info w-100 text-white fw-bold" onclick="krmOrtu()">KIRIM INFO</button>
+                </div>
+            </div>` 
+            : '';
+            
+        renderPage("Ruang Orangtua", `${form}<div id="list-ortu">Loading...</div>`);
+        
+        if (isOrtu) {
+            loadSiswaForParent(); // Isi Dropdown
+            loadGuruList('oTuj');
+        }
+        // Load riwayat (tampilkan hanya milik ortu yang login)
+        loadCard('get_info_ortu', 'list-ortu', 'border-info');
     }
+
+    function loadSiswaForParent() {
+        fetch(API_URL + "?action=get_siswa_data").then(r=>r.json()).then(res => {
+            let opts = '<option value="">-- Pilih Anak --</option>';
+            res.data.forEach(s => {
+                opts += `<option value="${s.username}">${s.nama}</option>`;
+            });
+            document.getElementById('pilihAnak').innerHTML = opts;
+        });
+    }
+
+    function verifyChild(el) {
+        let childUsername = el.value;
+        let childName = el.options[el.selectedIndex].text;
+        
+        if (!childUsername) {
+            document.getElementById('formInfoOrtu').style.display = 'none';
+            return;
+        }
+
+        let pass = prompt(`Masukkan Password Akun Siswa untuk "${childName}":`);
+        if (!pass) {
+            el.value = ""; // Reset
+            return;
+        }
+
+        setLoading(true);
+        fetch(`${API_URL}?action=verify_child&child_username=${childUsername}&child_password=${pass}`)
+        .then(r=>r.json())
+        .then(res => {
+            setLoading(false);
+            if (res.status === 'success') {
+                alert("Verifikasi Berhasil!");
+                currentChildUser = childUsername; // Simpan Username Anak
+                document.getElementById('formInfoOrtu').style.display = 'block';
+                document.getElementById('lblAnak').innerText = childName;
+                
+                // Filter List Riwayat agar menampilkan data anak ini saja (opsional, saat ini menampilkan semua riwayat ortu)
+                loadCard('get_info_ortu', 'list-ortu', 'border-info', childUsername);
+            } else {
+                alert("Password Salah! Akses ditolak.");
+                el.value = "";
+                document.getElementById('formInfoOrtu').style.display = 'none';
+            }
+        });
+    }
+
+    function krmOrtu(){ 
+        if(!currentChildUser) { alert("Silakan verifikasi anak terlebih dahulu."); return; }
+        submitGeneral("simpan_info_ortu", {
+            username_anak: currentChildUser, 
+            tanggal: getVal('oTgl'), 
+            judul: getVal('oJdl'), 
+            deskripsi: getVal('oDesk'), 
+            tujuan: getVal('oTuj')
+        }, () => loadCard('get_info_ortu','list-ortu','border-info')); 
+    }
+
+    // --- FUNGSI LAINNYA (TETAP SAMA) ---
+    function openIde() { let isGuru=currentUser.role==='Guru'; let form=isGuru?'':`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Tulis Ide</h6><input type="date" id="iTgl" class="form-control mb-2"><input type="text" id="iJdl" class="form-control mb-2" placeholder="Judul"><textarea id="iDesk" class="form-control mb-2" rows="3" placeholder="Isi ide..."></textarea><button class="btn btn-warning w-100 fw-bold" onclick="kirimIde()">KIRIM</button></div>`; renderPage("Ruang Ide", `${form}<div id="list-ide">Loading...</div>`); loadIde(); }
     function kirimIde(){ submitGeneral("simpan_ide", {tanggal:getVal('iTgl'), judul:getVal('iJdl'), deskripsi:getVal('iDesk')}, loadIde); }
-    function loadIde(){ fetch(API_URL+`?action=get_ide&username=${currentUser.username}&role=${currentUser.role}`).then(r=>r.json()).then(res=>{
-        let h=''; res.data.forEach(d=>{
-            let replyHtml = d.balasan!=='-' ? `<div class="mt-2 p-2 bg-warning-subtle rounded border border-warning small"><strong>Balasan Guru:</strong> ${d.balasan}</div>` : (currentUser.role==='Guru'?`<div class="input-group mt-2"><input type="text" class="form-control form-control-sm" id="rep_${d.id}" placeholder="Balas..."><button class="btn btn-sm btn-primary" onclick="replyIde('${d.id}')">Kirim</button></div>`:'<small class="text-muted d-block mt-2">Menunggu balasan...</small>');
-            let delBtn = (currentUser.username===d.nama || currentUser.role === d.role) ? `<i class="fas fa-trash text-danger float-end" onclick="hapusIde('${d.id}')"></i>` : ''; 
-            h+=`<div class="card card-custom p-3 mb-2 border-start border-4 border-warning"><div><small class="fw-bold text-warning">${d.nama} (${d.role})</small>${delBtn}</div><h6 class="fw-bold mt-1">${d.judul}</h6><p class="small text-muted mb-1">${d.deskripsi}</p>${replyHtml}</div>`;
-        }); document.getElementById('list-ide').innerHTML=h||'<p class="text-center text-muted">Belum ada data.</p>';
-    }); }
+    function loadIde(){ fetch(API_URL+`?action=get_ide&username=${currentUser.username}&role=${currentUser.role}`).then(r=>r.json()).then(res=>{ let h=''; res.data.forEach(d=>{ let replyHtml = d.balasan!=='-' ? `<div class="mt-2 p-2 bg-warning-subtle rounded border border-warning small"><strong>Balasan Guru:</strong> ${d.balasan}</div>` : (currentUser.role==='Guru'?`<div class="input-group mt-2"><input type="text" class="form-control form-control-sm" id="rep_${d.id}" placeholder="Balas..."><button class="btn btn-sm btn-primary" onclick="replyIde('${d.id}')">Kirim</button></div>`:'<small class="text-muted d-block mt-2">Menunggu balasan...</small>'); let delBtn = (currentUser.username===d.nama || currentUser.role === d.role) ? `<i class="fas fa-trash text-danger float-end" onclick="hapusIde('${d.id}')"></i>` : ''; h+=`<div class="card card-custom p-3 mb-2 border-start border-4 border-warning"><div><small class="fw-bold text-warning">${d.nama} (${d.role})</small>${delBtn}</div><h6 class="fw-bold mt-1">${d.judul}</h6><p class="small text-muted mb-1">${d.deskripsi}</p>${replyHtml}</div>`; }); document.getElementById('list-ide').innerHTML=h||'<p class="text-center text-muted">Belum ada data.</p>'; }); }
     function replyIde(id){ let val=document.getElementById('rep_'+id).value; if(!val)return; fetch(`${API_URL}?action=respon_ide&id_post=${id}&balasan=${val}`).then(r=>r.json()).then(d=>{alert(d.message);loadIde();}); }
     function hapusIde(id){ if(confirm("Hapus?")) fetch(`${API_URL}?action=hapus_ide&id_post=${id}&username=${currentUser.username}`).then(r=>r.json()).then(d=>{alert(d.message);loadIde();}); }
-
-    // --- 2. RUANG RASA (FIX) ---
-    function openRasa() {
-        if(currentUser.role==='Orangtua'){alert("Maaf, Ruang Rasa khusus Siswa."); return;}
-        let isGuru = currentUser.role==='Guru';
-        let form = isGuru ? '' : `<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Curhat Yuk</h6><input type="date" id="rTgl" class="form-control mb-2"><select id="rTuj" class="form-select mb-2"></select><input type="text" id="rJdl" class="form-control mb-2" placeholder="Judul"><textarea id="rDesk" class="form-control mb-2" rows="3" placeholder="Cerita..."></textarea><div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="rAnon"><label class="small">Anonim</label></div><button class="btn btn-danger w-100 fw-bold" onclick="kirimRasa()">KIRIM</button></div>`;
-        renderPage("Ruang Rasa", `${form}<div id="list-rasa">Loading...</div>`);
-        if(!isGuru) loadGuruList('rTuj'); loadRasa();
-    }
+    function openRasa() { if(currentUser.role==='Orangtua'){alert("Maaf, Ruang Rasa khusus Siswa."); return;} let isGuru=currentUser.role==='Guru'; let form=isGuru?'':`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Curhat Yuk</h6><input type="date" id="rTgl" class="form-control mb-2"><select id="rTuj" class="form-select mb-2"></select><input type="text" id="rJdl" class="form-control mb-2" placeholder="Judul"><textarea id="rDesk" class="form-control mb-2" rows="3" placeholder="Cerita..."></textarea><div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="rAnon"><label class="small">Anonim</label></div><button class="btn btn-danger w-100 fw-bold" onclick="kirimRasa()">KIRIM</button></div>`; renderPage("Ruang Rasa", `${form}<div id="list-rasa">Loading...</div>`); if(!isGuru) loadGuruList('rTuj'); loadRasa(); }
     function kirimRasa(){ submitGeneral("simpan_rasa", {tanggal:getVal('rTgl'), tujuan:getVal('rTuj'), judul:getVal('rJdl'), deskripsi:getVal('rDesk'), anonim:document.getElementById('rAnon').checked}, loadRasa); }
-    function loadRasa(){ fetch(API_URL+`?action=get_rasa&username=${currentUser.username}&role=${currentUser.role}`).then(r=>r.json()).then(res=>{
-        let h=''; res.data.forEach(d=>{
-            let nm = d.anonim==='Ya'?'Seseorang':d.nama;
-            let replyHtml = d.balasan!=='-' ? `<div class="mt-2 p-2 bg-danger-subtle rounded border border-danger small"><strong>Guru:</strong> ${d.balasan}</div>` : (currentUser.role==='Guru'?`<div class="input-group mt-2"><input type="text" class="form-control form-control-sm" id="repr_${d.id}" placeholder="Respon..."><button class="btn btn-sm btn-primary" onclick="replyRasa('${d.id}')">Kirim</button></div>`:'<small class="text-muted">Menunggu respon...</small>');
-            let delBtn = (d.nama===currentUser.username)?`<i class="fas fa-trash text-secondary float-end" onclick="hapusRasa('${d.id}')"></i>`:'';
-            h+=`<div class="card card-custom p-3 mb-2 border-start border-4 border-danger"><div><small class="fw-bold text-danger">${nm}</small> <small class="text-muted">to ${d.tujuan}</small>${delBtn}</div><h6 class="fw-bold mt-1">${d.judul}</h6><p class="small text-muted mb-1">${d.deskripsi}</p>${replyHtml}</div>`;
-        }); document.getElementById('list-rasa').innerHTML=h||'<p class="text-center text-muted">Belum ada curhat.</p>';
-    }); }
+    function loadRasa(){ fetch(API_URL+`?action=get_rasa&username=${currentUser.username}&role=${currentUser.role}`).then(r=>r.json()).then(res=>{ let h=''; res.data.forEach(d=>{ let nm=d.anonim==='Ya'?'Seseorang':d.nama; let replyHtml=d.balasan!=='-' ? `<div class="mt-2 p-2 bg-danger-subtle rounded border border-danger small"><strong>Guru:</strong> ${d.balasan}</div>` : (currentUser.role==='Guru'?`<div class="input-group mt-2"><input type="text" class="form-control form-control-sm" id="repr_${d.id}" placeholder="Respon..."><button class="btn btn-sm btn-primary" onclick="replyRasa('${d.id}')">Kirim</button></div>`:'<small class="text-muted">Menunggu respon...</small>'); let delBtn=(d.nama===currentUser.username)?`<i class="fas fa-trash text-secondary float-end" onclick="hapusRasa('${d.id}')"></i>`:''; h+=`<div class="card card-custom p-3 mb-2 border-start border-4 border-danger"><div><small class="fw-bold text-danger">${nm}</small> <small class="text-muted">to ${d.tujuan}</small>${delBtn}</div><h6 class="fw-bold mt-1">${d.judul}</h6><p class="small text-muted mb-1">${d.deskripsi}</p>${replyHtml}</div>`; }); document.getElementById('list-rasa').innerHTML=h||'<p class="text-center text-muted">Belum ada curhat.</p>'; }); }
     function replyRasa(id){ let val=document.getElementById('repr_'+id).value; if(!val)return; fetch(`${API_URL}?action=respon_rasa&id_post=${id}&balasan=${val}`).then(r=>r.json()).then(d=>{alert(d.message);loadRasa();}); }
     function hapusRasa(id){ if(confirm("Hapus?")) fetch(`${API_URL}?action=hapus_rasa&id_post=${id}&username=${currentUser.username}`).then(r=>r.json()).then(d=>{alert(d.message);loadRasa();}); }
-
-    // --- 3 & 4. ASPIRASI & EVALUASI ---
     function openAspirasi() { openAspEval('Aspirasi', 'simpan_aspirasi', 'get_aspirasi', 'success'); }
     function openEvaluasi() { openAspEval('Evaluasi', 'simpan_evaluasi', 'get_evaluasi', 'danger'); }
-    function openAspEval(n, s, g, c) {
-        let isGuru=currentUser.role==='Guru';
-        let form=isGuru?`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Input ${n}</h6><input type="date" id="aTgl" class="form-control mb-2"><select id="aSis" class="form-select mb-2"></select><input type="text" id="aJdl" class="form-control mb-2" placeholder="${n=='Aspirasi'?'Karakter':'Perihal'}"><textarea id="aDesk" class="form-control mb-2" rows="2"></textarea>${n=='Aspirasi'?'<div class="form-check mb-2"><input type="checkbox" id="aPub" class="form-check-input" checked><label class="small">Publik</label></div>':''}<button class="btn btn-${c} w-100" onclick="krmAspEval('${s}','${n}')">SIMPAN</button></div>`:'';
-        renderPage(`Ruang ${n}`, `${form}<div id="list-aspeval">Loading...</div>`);
-        if(isGuru) loadSiswaList('aSis'); loadCard(g, 'list-aspeval', `border-${c}`);
-    }
-    function krmAspEval(act, n) { 
-        let d={nama_guru:currentUser.nama, nama_siswa:getVal('aSis'), tanggal:getVal('aTgl'), deskripsi:getVal('aDesk')};
-        if(n=='Aspirasi'){d.karakter=getVal('aJdl'); d.publik=document.getElementById('aPub').checked?"Ya":"Tidak";} else {d.perihal=getVal('aJdl');}
-        submitGeneral(act, d, ()=>loadCard(n=='Aspirasi'?'get_aspirasi':'get_evaluasi', 'list-aspeval', n=='Aspirasi'?'border-success':'border-danger'));
-    }
-
-    // --- 5. RUANG ORANGTUA (FIX LINK USERNAME) ---
-    function openOrtu() {
-        let isOrtu=currentUser.role==='Orangtua';
-        let form=isOrtu?`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Info ke Guru</h6><div class="alert alert-info py-2 small mb-2"><i class="fas fa-user-graduate"></i> Anak: <strong>${currentUser.info_display}</strong></div><input type="date" id="oTgl" class="form-control mb-2"><select id="oTuj" class="form-select mb-2"></select><input type="text" id="oJdl" class="form-control mb-2" placeholder="Judul Info"><textarea id="oDesk" class="form-control mb-2" rows="2" placeholder="Deskripsi Perkembangan..."></textarea><button class="btn btn-info w-100 text-white" onclick="krmOrtu()">KIRIM</button></div>`:'';
-        renderPage("Ruang Orangtua", `${form}<div id="list-ortu">Loading...</div>`);
-        if(isOrtu) loadGuruList('oTuj'); loadCard('get_info_ortu', 'list-ortu', 'border-info');
-    }
-    function krmOrtu(){ submitGeneral("simpan_info_ortu", {nama_siswa:currentUser.info, username_anak:currentUser.info, tanggal:getVal('oTgl'), judul:getVal('oJdl'), deskripsi:getVal('oDesk'), tujuan:getVal('oTuj')}, ()=>loadCard('get_info_ortu','list-ortu','border-info')); }
-
-    // --- 6. RUANG KONSELING (FIX) ---
-    function openKonseling() {
-        let isGuru=currentUser.role==='Guru';
-        let form=isGuru?'':`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Buat Janji BK</h6><select id="kTuj" class="form-select mb-2"></select><input type="text" id="kWkt" class="form-control mb-2" placeholder="Hari, Tgl, Jam"><textarea id="kPerlu" class="form-control mb-2" rows="2" placeholder="Keperluan"></textarea><button class="btn btn-primary w-100" onclick="krmKonsel()">AJUKAN</button></div>`;
-        renderPage("Ruang Konseling", `${form}<div id="list-konsel">Loading...</div>`);
-        if(!isGuru) loadGuruList('kTuj'); loadKonsel();
-    }
+    function openAspEval(n, s, g, c) { let isGuru=currentUser.role==='Guru'; let form=isGuru?`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Input ${n}</h6><input type="date" id="aTgl" class="form-control mb-2"><select id="aSis" class="form-select mb-2"></select><input type="text" id="aJdl" class="form-control mb-2" placeholder="${n=='Aspirasi'?'Karakter':'Perihal'}"><textarea id="aDesk" class="form-control mb-2" rows="2"></textarea>${n=='Aspirasi'?'<div class="form-check mb-2"><input type="checkbox" id="aPub" class="form-check-input" checked><label class="small">Publik</label></div>':''}<button class="btn btn-${c} w-100" onclick="krmAspEval('${s}','${n}')">SIMPAN</button></div>`:''; renderPage(`Ruang ${n}`, `${form}<div id="list-aspeval">Loading...</div>`); if(isGuru) loadSiswaList('aSis'); loadCard(g, 'list-aspeval', `border-${c}`); }
+    function krmAspEval(act, n) { let d={nama_guru:currentUser.nama, nama_siswa:getVal('aSis'), tanggal:getVal('aTgl'), deskripsi:getVal('aDesk')}; if(n=='Aspirasi'){d.karakter=getVal('aJdl'); d.publik=document.getElementById('aPub').checked?"Ya":"Tidak";} else {d.perihal=getVal('aJdl');} submitGeneral(act, d, ()=>loadCard(n=='Aspirasi'?'get_aspirasi':'get_evaluasi', 'list-aspeval', n=='Aspirasi'?'border-success':'border-danger')); }
+    function openKonseling() { let isGuru=currentUser.role==='Guru'; let form=isGuru?'':`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Buat Janji BK</h6><select id="kTuj" class="form-select mb-2"></select><input type="text" id="kWkt" class="form-control mb-2" placeholder="Hari, Tgl, Jam"><textarea id="kPerlu" class="form-control mb-2" rows="2" placeholder="Keperluan"></textarea><button class="btn btn-primary w-100" onclick="krmKonsel()">AJUKAN</button></div>`; renderPage("Ruang Konseling", `${form}<div id="list-konsel">Loading...</div>`); if(!isGuru) loadGuruList('kTuj'); loadKonsel(); }
     function krmKonsel(){ submitGeneral("simpan_konseling", {tujuan_guru:getVal('kTuj'), tanggal_jam:getVal('kWkt'), keperluan:getVal('kPerlu')}, loadKonsel); }
-    function loadKonsel(){ fetch(API_URL+`?action=get_konseling&username=${currentUser.username}&role=${currentUser.role}&nama=${currentUser.nama}`).then(r=>r.json()).then(res=>{
-        let h=''; res.data.forEach(d=>{
-            let badge=d.status==='Menunggu'?'bg-warning':(d.status==='Diterima'?'bg-success':'bg-danger');
-            let action=currentUser.role==='Guru' && d.status==='Menunggu' ? `<div class="mt-2"><button class="btn btn-sm btn-success me-1" onclick="respKonsel('${d.id}','Diterima')">Terima</button><button class="btn btn-sm btn-danger" onclick="respKonsel('${d.id}','Ditolak')">Tolak</button></div>` : `<small class="d-block mt-1 text-muted">Info: ${d.balasan}</small>`;
-            h+=`<div class="card card-custom p-3 mb-2 border-start border-4 border-primary"><div class="d-flex justify-content-between"><strong>${d.pemohon} -> ${d.guru}</strong><span class="badge ${badge}">${d.status}</span></div><small>${d.waktu}</small><p class="small m-0">${d.keperluan}</p>${action}</div>`;
-        }); document.getElementById('list-konsel').innerHTML=h||'<p class="text-center text-muted">Belum ada janji.</p>';
-    }); }
+    function loadKonsel(){ fetch(API_URL+`?action=get_konseling&username=${currentUser.username}&role=${currentUser.role}&nama=${currentUser.nama}`).then(r=>r.json()).then(res=>{ let h=''; res.data.forEach(d=>{ let badge=d.status==='Menunggu'?'bg-warning':(d.status==='Diterima'?'bg-success':'bg-danger'); let action=currentUser.role==='Guru' && d.status==='Menunggu' ? `<div class="mt-2"><button class="btn btn-sm btn-success me-1" onclick="respKonsel('${d.id}','Diterima')">Terima</button><button class="btn btn-sm btn-danger" onclick="respKonsel('${d.id}','Ditolak')">Tolak</button></div>` : `<small class="d-block mt-1 text-muted">Info: ${d.balasan}</small>`; h+=`<div class="card card-custom p-3 mb-2 border-start border-4 border-primary"><div class="d-flex justify-content-between"><strong>${d.pemohon} -> ${d.guru}</strong><span class="badge ${badge}">${d.status}</span></div><small>${d.waktu}</small><p class="small m-0">${d.keperluan}</p>${action}</div>`; }); document.getElementById('list-konsel').innerHTML=h||'<p class="text-center text-muted">Belum ada janji.</p>'; }); }
     function respKonsel(id, st){ let msg=prompt("Pesan tambahan (Lokasi/Info):", "Silakan datang ke ruang BK"); if(!msg)return; fetch(`${API_URL}?action=respon_konseling&id_post=${id}&status=${st}&balasan=${msg}`).then(r=>r.json()).then(d=>{alert(d.message);loadKonsel();}); }
-
-    // --- SHARED UTILS ---
     function getVal(id){return document.getElementById(id).value;}
     function submitGeneral(act, data, cb){ setLoading(true); data.action=act; data.username=currentUser.username; data.role=currentUser.role; data.nama=currentUser.nama; const p=new URLSearchParams(data); fetch(API_URL+"?"+p).then(r=>r.json()).then(res=>{setLoading(false);alert(res.message);if(cb)cb();}); }
     function loadGuruList(id) { fetch(API_URL+"?action=get_list_guru").then(r=>r.json()).then(d=>{let o='<option>Pilih Guru...</option>';d.data.forEach(g=>o+=`<option>${g}</option>`);document.getElementById(id).innerHTML=o;}); }
     function loadSiswaList(id) { fetch(API_URL+"?action=get_list_siswa").then(r=>r.json()).then(d=>{let o='<option value="">Pilih Siswa...</option>';d.data.forEach(s=>o+=`<option>${s}</option>`);document.getElementById(id).innerHTML=o;}); }
-    function loadCard(a,el,c) { document.getElementById(el).innerHTML='Loading...'; const p=new URLSearchParams({action:a, role:currentUser.role, nama:currentUser.nama, info:currentUser.info, username:currentUser.username}); fetch(API_URL+"?"+p).then(r=>r.json()).then(res=>{let h=res.data.length?'':'<div class="text-center text-muted mt-3">Kosong.</div>';res.data.forEach(d=>{h+=`<div class="card ${c} mb-2 p-3 shadow-sm rounded-4"><strong>${d.pengirim||d.anak}</strong><small>${d.judul}</small><p class="small text-muted m-0">${d.deskripsi}</p></div>`});document.getElementById(el).innerHTML=h;}); }
-    
-    // --- FITUR LAIN (SIMPLE) ---
+    function loadCard(a,el,c, filterChild) { document.getElementById(el).innerHTML='Loading...'; let params={action:a, role:currentUser.role, nama:currentUser.nama, info:currentUser.info, username:currentUser.username}; if(filterChild) params.username_anak=filterChild; const p=new URLSearchParams(params); fetch(API_URL+"?"+p).then(r=>r.json()).then(res=>{let h=res.data.length?'':'<div class="text-center text-muted mt-3">Kosong.</div>';res.data.forEach(d=>{h+=`<div class="card ${c} mb-2 p-3 shadow-sm rounded-4"><strong>${d.pengirim||d.anak}</strong><small>${d.judul}</small><p class="small text-muted m-0">${d.deskripsi}</p></div>`});document.getElementById(el).innerHTML=h;}); }
     function openChat() { renderPage("Ruang Chat", `<div id="chat-contact-view"><p class="small text-muted mb-2">Pilih kontak:</p><div id="chat-contacts" class="list-group">Loading...</div></div><div id="chat-room-view" style="display:none;"><div class="d-flex align-items-center mb-3 p-2 bg-light rounded"><button class="btn btn-sm btn-secondary me-2" onclick="closeChatRoom()"><i class="fas fa-times"></i></button><strong id="chat-partner-name">Nama</strong></div><div id="chat-messages" style="height:300px;overflow-y:auto;background:#fff;border:1px solid #eee;border-radius:10px;padding:10px;mb-2"></div><div class="input-group mt-2"><input type="text" class="form-control" id="chat-input" placeholder="Tulis..."><button class="btn btn-primary" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button></div></div>`); fetch(`${API_URL}?action=get_chat_contacts&role=${currentUser.role}`).then(r=>r.json()).then(res=>{let h='';res.data.forEach(c=>h+=`<button class="list-group-item list-group-item-action" onclick="openChatRoom('${c}')"><i class="fas fa-user-circle me-2"></i> ${c}</button>`);document.getElementById('chat-contacts').innerHTML=h;}); }
     let chatPartner=''; function openChatRoom(n){chatPartner=n;document.getElementById('chat-contact-view').style.display='none';document.getElementById('chat-room-view').style.display='block';document.getElementById('chat-partner-name').innerText=n;loadMessages();} function closeChatRoom(){document.getElementById('chat-contact-view').style.display='block';document.getElementById('chat-room-view').style.display='none';} function loadMessages(){document.getElementById('chat-messages').innerHTML='<small>Loading...</small>';fetch(`${API_URL}?action=get_chat&user1=${currentUser.nama}&user2=${chatPartner}`).then(r=>r.json()).then(res=>{let h='';res.data.forEach(m=>{let c=m.sender===currentUser.nama?'chat-me':'chat-other';h+=`<div class="d-flex flex-column"><div class="chat-bubble ${c}">${m.message}</div></div>`;});document.getElementById('chat-messages').innerHTML=h;});} function sendChat(){let m=document.getElementById('chat-input').value;if(!m)return;fetch(`${API_URL}?action=simpan_chat&sender=${currentUser.nama}&receiver=${chatPartner}&message=${m}`).then(()=>{document.getElementById('chat-input').value='';loadMessages();});}
     function openMood() { renderPage("Mood & Kesan", `<div class="text-center mb-4"><p class="small text-muted">Bagaimana perasaanmu?</p><div class="d-flex justify-content-center gap-3 mb-3"><i class="mood-icon fas fa-laugh-beam text-success" onclick="selMood(this,'Senang')"></i><i class="mood-icon fas fa-meh text-warning" onclick="selMood(this,'Biasa')"></i><i class="mood-icon fas fa-frown text-danger" onclick="selMood(this,'Sedih')"></i><i class="mood-icon fas fa-tired text-secondary" onclick="selMood(this,'Lelah')"></i></div><input type="hidden" id="f_mood"><input type="text" class="form-control mb-3 text-center" id="f_kesan" placeholder="Tulis kesan singkat..." required><button class="btn btn-primary w-100 rounded-pill" onclick="submitMood()">UPDATE STATUS</button></div><hr>${currentUser.role==='Guru'?'<h6 class="fw-bold small">Mood Siswa</h6><div id="list-mood-guru"></div>':''}`); if(currentUser.role==='Guru') loadMoodGuru(); }
