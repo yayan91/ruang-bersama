@@ -93,12 +93,13 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // ===========================================
-    // PASTE URL ANDA DI SINI
+    // PASTE URL SCRIPT ANDA DI SINI
     // ===========================================
     const API_URL = "https://script.google.com/macros/s/AKfycbzbcXELSlu1SLwLOgNTBuUJj0u98NEQJjweb7yRO9Ja87vSjyAaIHVU4SXNxpBLi_s/exec"; 
 
     let currentUser = null;
-    let currentChildUser = null; // Menyimpan Username Anak yang terverifikasi
+    let currentChildUser = null;
+    let currentChildName = null;
 
     document.getElementById('headerDate').innerText = new Date().toLocaleDateString('id-ID', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
@@ -125,6 +126,20 @@
     function initDashboard() {
         document.getElementById('dashNama').innerText=currentUser.nama; document.getElementById('dashRole').innerText=currentUser.role; document.getElementById('dashInfo').innerText=currentUser.info||"-"; document.getElementById('dashKesan').innerText=currentUser.kesan||"";
         let lf=localStorage.getItem('img_'+currentUser.username); document.getElementById('dashFoto').src=lf||"https://via.placeholder.com/150";
+        
+        // Cek LocalStorage untuk Anak (Jika Ortu)
+        if(currentUser.role === 'Orangtua') {
+            let savedChild = localStorage.getItem('child_user_' + currentUser.username);
+            let savedChildName = localStorage.getItem('child_name_' + currentUser.username);
+            if(savedChild && savedChildName) {
+                currentChildUser = savedChild;
+                currentChildName = savedChildName;
+                document.getElementById('dashInfo').innerHTML = `<i class="fas fa-child text-primary"></i> ${savedChildName}`;
+            } else {
+                document.getElementById('dashInfo').innerHTML = `<i class="fas fa-exclamation-circle text-danger"></i> Belum pilih anak`;
+            }
+        }
+
         const menus=[
             {n:"Ruang Ide", i:"fa-lightbulb", c:"#ffc107", f:openIde}, {n:"Ruang Rasa", i:"fa-heart", c:"#dc3545", f:openRasa}, {n:"Aspirasi", i:"fa-star", c:"#28a745", f:openAspirasi}, {n:"Evaluasi", i:"fa-exclamation-triangle", c:"#fd7e14", f:openEvaluasi},
             {n:"Orangtua", i:"fa-user-friends", c:"#0dcaf0", f:openOrtu}, {n:"Konseling", i:"fa-comments", c:"#6f42c1", f:openKonseling}, {n:"Ruang Chat", i:"fa-comment-dots", c:"#20c997", f:openChat}, {n:"Mood & Kesan", i:"fa-smile", c:"#e83e8c", f:openMood},
@@ -135,65 +150,65 @@
         document.getElementById('menuContainer').innerHTML=h; window.menus=menus;
     }
 
-    // --- RUANG ORANGTUA (VERIFIKASI PASSWORD ANAK) ---
+    // --- RUANG ORANGTUA (AUTO SAVE) ---
     function openOrtu() {
         let isOrtu = currentUser.role === 'Orangtua';
-        // Form dengan Dropdown Pilihan Anak
-        let form = isOrtu ? `
-            <div class="p-3 bg-light rounded mb-3">
-                <h6 class="fw-bold mb-3">Verifikasi Data Anak</h6>
-                <div class="mb-3">
-                    <label class="small text-muted">Pilih Nama Anak</label>
-                    <select id="pilihAnak" class="form-select" onchange="verifyChild(this)">
-                        <option value="">-- Pilih Anak --</option>
-                    </select>
-                </div>
-                
-                <div id="formInfoOrtu" style="display:none; border-top:1px solid #ccc; paddingTop:15px;">
-                    <div class="alert alert-success small py-2"><i class="fas fa-check-circle"></i> Terhubung: <b id="lblAnak"></b></div>
+        let form = '';
+
+        if(isOrtu) {
+            // Jika sudah ada anak tersimpan
+            if(currentChildUser) {
+                form = `
+                <div class="p-3 bg-light rounded mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="small fw-bold text-success"><i class="fas fa-check-circle"></i> Terhubung: ${currentChildName}</div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="resetChild()">Ganti Anak</button>
+                    </div>
+                    <h6 class="fw-bold">Info ke Guru</h6>
                     <input type="date" id="oTgl" class="form-control mb-2">
                     <select id="oTuj" class="form-select mb-2"></select>
                     <input type="text" id="oJdl" class="form-control mb-2" placeholder="Judul Info">
-                    <textarea id="oDesk" class="form-control mb-2" rows="2" placeholder="Perkembangan anak..."></textarea>
+                    <textarea id="oDesk" class="form-control mb-2" rows="2" placeholder="Deskripsi Perkembangan..."></textarea>
                     <button class="btn btn-info w-100 text-white fw-bold" onclick="krmOrtu()">KIRIM INFO</button>
-                </div>
-            </div>` 
-            : '';
+                </div>`;
+            } else {
+                // Jika belum ada anak (Form Verifikasi)
+                form = `
+                <div class="p-3 bg-light rounded mb-3">
+                    <h6 class="fw-bold mb-2">Verifikasi Data Anak</h6>
+                    <p class="small text-muted mb-3">Pilih nama anak dan masukkan password akun siswa mereka untuk menghubungkan.</p>
+                    <select id="pilihAnak" class="form-select mb-3" onchange="verifyChild(this)">
+                        <option value="">-- Pilih Nama Anak --</option>
+                    </select>
+                </div>`;
+            }
+        }
             
         renderPage("Ruang Orangtua", `${form}<div id="list-ortu">Loading...</div>`);
         
         if (isOrtu) {
-            loadSiswaForParent(); // Isi Dropdown
-            loadGuruList('oTuj');
+            if(!currentChildUser) loadSiswaForParent();
+            else loadGuruList('oTuj');
         }
-        // Load riwayat (tampilkan hanya milik ortu yang login)
-        loadCard('get_info_ortu', 'list-ortu', 'border-info');
+        // Filter history by child username if available
+        loadCard('get_info_ortu', 'list-ortu', 'border-info', currentChildUser);
     }
 
     function loadSiswaForParent() {
         fetch(API_URL + "?action=get_siswa_data").then(r=>r.json()).then(res => {
-            let opts = '<option value="">-- Pilih Anak --</option>';
-            res.data.forEach(s => {
-                opts += `<option value="${s.username}">${s.nama}</option>`;
-            });
-            document.getElementById('pilihAnak').innerHTML = opts;
+            let opts = '<option value="">-- Pilih Nama Anak --</option>';
+            res.data.forEach(s => { opts += `<option value="${s.username}">${s.nama}</option>`; });
+            if(document.getElementById('pilihAnak')) document.getElementById('pilihAnak').innerHTML = opts;
         });
     }
 
     function verifyChild(el) {
         let childUsername = el.value;
         let childName = el.options[el.selectedIndex].text;
-        
-        if (!childUsername) {
-            document.getElementById('formInfoOrtu').style.display = 'none';
-            return;
-        }
+        if (!childUsername) return;
 
-        let pass = prompt(`Masukkan Password Akun Siswa untuk "${childName}":`);
-        if (!pass) {
-            el.value = ""; // Reset
-            return;
-        }
+        let pass = prompt(`Masukkan Password Akun Siswa "${childName}":`);
+        if (!pass) { el.value = ""; return; }
 
         setLoading(true);
         fetch(`${API_URL}?action=verify_child&child_username=${childUsername}&child_password=${pass}`)
@@ -201,33 +216,91 @@
         .then(res => {
             setLoading(false);
             if (res.status === 'success') {
-                alert("Verifikasi Berhasil!");
-                currentChildUser = childUsername; // Simpan Username Anak
-                document.getElementById('formInfoOrtu').style.display = 'block';
-                document.getElementById('lblAnak').innerText = childName;
+                alert("Berhasil Terhubung!");
+                // SIMPAN KE LOKAL & MEMORI
+                currentChildUser = childUsername;
+                currentChildName = childName;
+                localStorage.setItem('child_user_' + currentUser.username, childUsername);
+                localStorage.setItem('child_name_' + currentUser.username, childName);
                 
-                // Filter List Riwayat agar menampilkan data anak ini saja (opsional, saat ini menampilkan semua riwayat ortu)
-                loadCard('get_info_ortu', 'list-ortu', 'border-info', childUsername);
+                initDashboard(); // Refresh Info di Dashboard
+                openOrtu(); // Refresh Tampilan Ruang Ortu
             } else {
                 alert("Password Salah! Akses ditolak.");
                 el.value = "";
-                document.getElementById('formInfoOrtu').style.display = 'none';
             }
         });
     }
 
-    function krmOrtu(){ 
-        if(!currentChildUser) { alert("Silakan verifikasi anak terlebih dahulu."); return; }
-        submitGeneral("simpan_info_ortu", {
-            username_anak: currentChildUser, 
-            tanggal: getVal('oTgl'), 
-            judul: getVal('oJdl'), 
-            deskripsi: getVal('oDesk'), 
-            tujuan: getVal('oTuj')
-        }, () => loadCard('get_info_ortu','list-ortu','border-info')); 
+    function resetChild() {
+        if(confirm("Putuskan hubungan dengan akun anak ini?")) {
+            localStorage.removeItem('child_user_' + currentUser.username);
+            localStorage.removeItem('child_name_' + currentUser.username);
+            currentChildUser = null;
+            currentChildName = null;
+            initDashboard();
+            openOrtu();
+        }
     }
 
-    // --- FUNGSI LAINNYA (TETAP SAMA) ---
+    function krmOrtu(){ 
+        if(!currentChildUser) return;
+        submitGeneral("simpan_info_ortu", {
+            username_anak: currentChildUser, 
+            tanggal: getVal('oTgl'), judul: getVal('oJdl'), deskripsi: getVal('oDesk'), tujuan: getVal('oTuj')
+        }, () => loadCard('get_info_ortu','list-ortu','border-info', currentChildUser)); 
+    }
+
+    // --- INTEGRASI ASPIRASI & EVALUASI ---
+    function openAspirasi() { openAspEval('Aspirasi', 'simpan_aspirasi', 'get_aspirasi', 'success'); }
+    function openEvaluasi() { openAspEval('Evaluasi', 'simpan_evaluasi', 'get_evaluasi', 'danger'); }
+    function openAspEval(n, s, g, c) {
+        let isGuru=currentUser.role==='Guru';
+        // Tampilkan peringatan jika Ortu belum verifikasi anak
+        if(currentUser.role==='Orangtua' && !currentChildUser) {
+            alert("Silakan hubungkan akun anak di menu 'Ruang Orangtua' terlebih dahulu.");
+            return;
+        }
+        
+        let form=isGuru?`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Input ${n}</h6><input type="date" id="aTgl" class="form-control mb-2"><select id="aSis" class="form-select mb-2"></select><input type="text" id="aJdl" class="form-control mb-2" placeholder="${n=='Aspirasi'?'Karakter':'Perihal'}"><textarea id="aDesk" class="form-control mb-2" rows="2"></textarea>${n=='Aspirasi'?'<div class="form-check mb-2"><input type="checkbox" id="aPub" class="form-check-input" checked><label class="small">Publik</label></div>':''}<button class="btn btn-${c} w-100" onclick="krmAspEval('${s}','${n}')">SIMPAN</button></div>`:'';
+        
+        // Tambahkan Info Anak di Header jika Ortu
+        let headerInfo = (currentUser.role==='Orangtua') ? `<div class="alert alert-${c} small py-2 mb-2"><i class="fas fa-user-graduate"></i> Menampilkan data untuk: <strong>${currentChildName}</strong></div>` : '';
+
+        renderPage(`Ruang ${n}`, `${headerInfo}${form}<div id="list-aspeval">Loading...</div>`);
+        if(isGuru) loadSiswaList('aSis'); 
+        
+        // Kirim Nama Anak (currentChildName) ke backend untuk filter
+        loadCard(g, 'list-aspeval', `border-${c}`, null, currentChildName);
+    }
+    
+    function krmAspEval(act, n) { 
+        let d={nama_guru:currentUser.nama, nama_siswa:getVal('aSis'), tanggal:getVal('aTgl'), deskripsi:getVal('aDesk')};
+        if(n=='Aspirasi'){d.karakter=getVal('aJdl'); d.publik=document.getElementById('aPub').checked?"Ya":"Tidak";} else {d.perihal=getVal('aJdl');}
+        submitGeneral(act, d, ()=>loadCard(n=='Aspirasi'?'get_aspirasi':'get_evaluasi', 'list-aspeval', n=='Aspirasi'?'border-success':'border-danger'));
+    }
+
+    // --- FUNGSI UTILS & LAINNYA ---
+    function getVal(id){return document.getElementById(id).value;}
+    function submitGeneral(act, data, cb){ setLoading(true); data.action=act; data.username=currentUser.username; data.role=currentUser.role; data.nama=currentUser.nama; const p=new URLSearchParams(data); fetch(API_URL+"?"+p).then(r=>r.json()).then(res=>{setLoading(false);alert(res.message);if(cb)cb();}); }
+    function loadGuruList(id) { fetch(API_URL+"?action=get_list_guru").then(r=>r.json()).then(d=>{let o='<option>Pilih Guru...</option>';d.data.forEach(g=>o+=`<option>${g}</option>`);document.getElementById(id).innerHTML=o;}); }
+    function loadSiswaList(id) { fetch(API_URL+"?action=get_list_siswa").then(r=>r.json()).then(d=>{let o='<option value="">Pilih Siswa...</option>';d.data.forEach(s=>o+=`<option>${s}</option>`);document.getElementById(id).innerHTML=o;}); }
+    
+    // Updated LoadCard to accept Child Name Filter
+    function loadCard(a,el,c, filterUsername, filterName) { 
+        document.getElementById(el).innerHTML='Loading...'; 
+        let params={action:a, role:currentUser.role, nama:currentUser.nama, info:currentUser.info, username:currentUser.username}; 
+        if(filterUsername) params.username_anak = filterUsername; // Filter by Username (Utk Info Ortu)
+        if(filterName) params.nama_anak = filterName; // Filter by Name (Utk Aspirasi/Evaluasi)
+        
+        const p=new URLSearchParams(params); 
+        fetch(API_URL+"?"+p).then(r=>r.json()).then(res=>{
+            let h=res.data.length?'':'<div class="text-center text-muted mt-3">Kosong.</div>';
+            res.data.forEach(d=>{h+=`<div class="card ${c} mb-2 p-3 shadow-sm rounded-4"><strong>${d.pengirim||d.anak||d.siswa}</strong><small>${d.judul}</small><p class="small text-muted m-0">${d.deskripsi}</p></div>`});
+            document.getElementById(el).innerHTML=h;
+        }); 
+    }
+
     function openIde() { let isGuru=currentUser.role==='Guru'; let form=isGuru?'':`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Tulis Ide</h6><input type="date" id="iTgl" class="form-control mb-2"><input type="text" id="iJdl" class="form-control mb-2" placeholder="Judul"><textarea id="iDesk" class="form-control mb-2" rows="3" placeholder="Isi ide..."></textarea><button class="btn btn-warning w-100 fw-bold" onclick="kirimIde()">KIRIM</button></div>`; renderPage("Ruang Ide", `${form}<div id="list-ide">Loading...</div>`); loadIde(); }
     function kirimIde(){ submitGeneral("simpan_ide", {tanggal:getVal('iTgl'), judul:getVal('iJdl'), deskripsi:getVal('iDesk')}, loadIde); }
     function loadIde(){ fetch(API_URL+`?action=get_ide&username=${currentUser.username}&role=${currentUser.role}`).then(r=>r.json()).then(res=>{ let h=''; res.data.forEach(d=>{ let replyHtml = d.balasan!=='-' ? `<div class="mt-2 p-2 bg-warning-subtle rounded border border-warning small"><strong>Balasan Guru:</strong> ${d.balasan}</div>` : (currentUser.role==='Guru'?`<div class="input-group mt-2"><input type="text" class="form-control form-control-sm" id="rep_${d.id}" placeholder="Balas..."><button class="btn btn-sm btn-primary" onclick="replyIde('${d.id}')">Kirim</button></div>`:'<small class="text-muted d-block mt-2">Menunggu balasan...</small>'); let delBtn = (currentUser.username===d.nama || currentUser.role === d.role) ? `<i class="fas fa-trash text-danger float-end" onclick="hapusIde('${d.id}')"></i>` : ''; h+=`<div class="card card-custom p-3 mb-2 border-start border-4 border-warning"><div><small class="fw-bold text-warning">${d.nama} (${d.role})</small>${delBtn}</div><h6 class="fw-bold mt-1">${d.judul}</h6><p class="small text-muted mb-1">${d.deskripsi}</p>${replyHtml}</div>`; }); document.getElementById('list-ide').innerHTML=h||'<p class="text-center text-muted">Belum ada data.</p>'; }); }
@@ -238,19 +311,10 @@
     function loadRasa(){ fetch(API_URL+`?action=get_rasa&username=${currentUser.username}&role=${currentUser.role}`).then(r=>r.json()).then(res=>{ let h=''; res.data.forEach(d=>{ let nm=d.anonim==='Ya'?'Seseorang':d.nama; let replyHtml=d.balasan!=='-' ? `<div class="mt-2 p-2 bg-danger-subtle rounded border border-danger small"><strong>Guru:</strong> ${d.balasan}</div>` : (currentUser.role==='Guru'?`<div class="input-group mt-2"><input type="text" class="form-control form-control-sm" id="repr_${d.id}" placeholder="Respon..."><button class="btn btn-sm btn-primary" onclick="replyRasa('${d.id}')">Kirim</button></div>`:'<small class="text-muted">Menunggu respon...</small>'); let delBtn=(d.nama===currentUser.username)?`<i class="fas fa-trash text-secondary float-end" onclick="hapusRasa('${d.id}')"></i>`:''; h+=`<div class="card card-custom p-3 mb-2 border-start border-4 border-danger"><div><small class="fw-bold text-danger">${nm}</small> <small class="text-muted">to ${d.tujuan}</small>${delBtn}</div><h6 class="fw-bold mt-1">${d.judul}</h6><p class="small text-muted mb-1">${d.deskripsi}</p>${replyHtml}</div>`; }); document.getElementById('list-rasa').innerHTML=h||'<p class="text-center text-muted">Belum ada curhat.</p>'; }); }
     function replyRasa(id){ let val=document.getElementById('repr_'+id).value; if(!val)return; fetch(`${API_URL}?action=respon_rasa&id_post=${id}&balasan=${val}`).then(r=>r.json()).then(d=>{alert(d.message);loadRasa();}); }
     function hapusRasa(id){ if(confirm("Hapus?")) fetch(`${API_URL}?action=hapus_rasa&id_post=${id}&username=${currentUser.username}`).then(r=>r.json()).then(d=>{alert(d.message);loadRasa();}); }
-    function openAspirasi() { openAspEval('Aspirasi', 'simpan_aspirasi', 'get_aspirasi', 'success'); }
-    function openEvaluasi() { openAspEval('Evaluasi', 'simpan_evaluasi', 'get_evaluasi', 'danger'); }
-    function openAspEval(n, s, g, c) { let isGuru=currentUser.role==='Guru'; let form=isGuru?`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Input ${n}</h6><input type="date" id="aTgl" class="form-control mb-2"><select id="aSis" class="form-select mb-2"></select><input type="text" id="aJdl" class="form-control mb-2" placeholder="${n=='Aspirasi'?'Karakter':'Perihal'}"><textarea id="aDesk" class="form-control mb-2" rows="2"></textarea>${n=='Aspirasi'?'<div class="form-check mb-2"><input type="checkbox" id="aPub" class="form-check-input" checked><label class="small">Publik</label></div>':''}<button class="btn btn-${c} w-100" onclick="krmAspEval('${s}','${n}')">SIMPAN</button></div>`:''; renderPage(`Ruang ${n}`, `${form}<div id="list-aspeval">Loading...</div>`); if(isGuru) loadSiswaList('aSis'); loadCard(g, 'list-aspeval', `border-${c}`); }
-    function krmAspEval(act, n) { let d={nama_guru:currentUser.nama, nama_siswa:getVal('aSis'), tanggal:getVal('aTgl'), deskripsi:getVal('aDesk')}; if(n=='Aspirasi'){d.karakter=getVal('aJdl'); d.publik=document.getElementById('aPub').checked?"Ya":"Tidak";} else {d.perihal=getVal('aJdl');} submitGeneral(act, d, ()=>loadCard(n=='Aspirasi'?'get_aspirasi':'get_evaluasi', 'list-aspeval', n=='Aspirasi'?'border-success':'border-danger')); }
     function openKonseling() { let isGuru=currentUser.role==='Guru'; let form=isGuru?'':`<div class="p-3 bg-light rounded mb-3"><h6 class="fw-bold">Buat Janji BK</h6><select id="kTuj" class="form-select mb-2"></select><input type="text" id="kWkt" class="form-control mb-2" placeholder="Hari, Tgl, Jam"><textarea id="kPerlu" class="form-control mb-2" rows="2" placeholder="Keperluan"></textarea><button class="btn btn-primary w-100" onclick="krmKonsel()">AJUKAN</button></div>`; renderPage("Ruang Konseling", `${form}<div id="list-konsel">Loading...</div>`); if(!isGuru) loadGuruList('kTuj'); loadKonsel(); }
     function krmKonsel(){ submitGeneral("simpan_konseling", {tujuan_guru:getVal('kTuj'), tanggal_jam:getVal('kWkt'), keperluan:getVal('kPerlu')}, loadKonsel); }
     function loadKonsel(){ fetch(API_URL+`?action=get_konseling&username=${currentUser.username}&role=${currentUser.role}&nama=${currentUser.nama}`).then(r=>r.json()).then(res=>{ let h=''; res.data.forEach(d=>{ let badge=d.status==='Menunggu'?'bg-warning':(d.status==='Diterima'?'bg-success':'bg-danger'); let action=currentUser.role==='Guru' && d.status==='Menunggu' ? `<div class="mt-2"><button class="btn btn-sm btn-success me-1" onclick="respKonsel('${d.id}','Diterima')">Terima</button><button class="btn btn-sm btn-danger" onclick="respKonsel('${d.id}','Ditolak')">Tolak</button></div>` : `<small class="d-block mt-1 text-muted">Info: ${d.balasan}</small>`; h+=`<div class="card card-custom p-3 mb-2 border-start border-4 border-primary"><div class="d-flex justify-content-between"><strong>${d.pemohon} -> ${d.guru}</strong><span class="badge ${badge}">${d.status}</span></div><small>${d.waktu}</small><p class="small m-0">${d.keperluan}</p>${action}</div>`; }); document.getElementById('list-konsel').innerHTML=h||'<p class="text-center text-muted">Belum ada janji.</p>'; }); }
     function respKonsel(id, st){ let msg=prompt("Pesan tambahan (Lokasi/Info):", "Silakan datang ke ruang BK"); if(!msg)return; fetch(`${API_URL}?action=respon_konseling&id_post=${id}&status=${st}&balasan=${msg}`).then(r=>r.json()).then(d=>{alert(d.message);loadKonsel();}); }
-    function getVal(id){return document.getElementById(id).value;}
-    function submitGeneral(act, data, cb){ setLoading(true); data.action=act; data.username=currentUser.username; data.role=currentUser.role; data.nama=currentUser.nama; const p=new URLSearchParams(data); fetch(API_URL+"?"+p).then(r=>r.json()).then(res=>{setLoading(false);alert(res.message);if(cb)cb();}); }
-    function loadGuruList(id) { fetch(API_URL+"?action=get_list_guru").then(r=>r.json()).then(d=>{let o='<option>Pilih Guru...</option>';d.data.forEach(g=>o+=`<option>${g}</option>`);document.getElementById(id).innerHTML=o;}); }
-    function loadSiswaList(id) { fetch(API_URL+"?action=get_list_siswa").then(r=>r.json()).then(d=>{let o='<option value="">Pilih Siswa...</option>';d.data.forEach(s=>o+=`<option>${s}</option>`);document.getElementById(id).innerHTML=o;}); }
-    function loadCard(a,el,c, filterChild) { document.getElementById(el).innerHTML='Loading...'; let params={action:a, role:currentUser.role, nama:currentUser.nama, info:currentUser.info, username:currentUser.username}; if(filterChild) params.username_anak=filterChild; const p=new URLSearchParams(params); fetch(API_URL+"?"+p).then(r=>r.json()).then(res=>{let h=res.data.length?'':'<div class="text-center text-muted mt-3">Kosong.</div>';res.data.forEach(d=>{h+=`<div class="card ${c} mb-2 p-3 shadow-sm rounded-4"><strong>${d.pengirim||d.anak}</strong><small>${d.judul}</small><p class="small text-muted m-0">${d.deskripsi}</p></div>`});document.getElementById(el).innerHTML=h;}); }
     function openChat() { renderPage("Ruang Chat", `<div id="chat-contact-view"><p class="small text-muted mb-2">Pilih kontak:</p><div id="chat-contacts" class="list-group">Loading...</div></div><div id="chat-room-view" style="display:none;"><div class="d-flex align-items-center mb-3 p-2 bg-light rounded"><button class="btn btn-sm btn-secondary me-2" onclick="closeChatRoom()"><i class="fas fa-times"></i></button><strong id="chat-partner-name">Nama</strong></div><div id="chat-messages" style="height:300px;overflow-y:auto;background:#fff;border:1px solid #eee;border-radius:10px;padding:10px;mb-2"></div><div class="input-group mt-2"><input type="text" class="form-control" id="chat-input" placeholder="Tulis..."><button class="btn btn-primary" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button></div></div>`); fetch(`${API_URL}?action=get_chat_contacts&role=${currentUser.role}`).then(r=>r.json()).then(res=>{let h='';res.data.forEach(c=>h+=`<button class="list-group-item list-group-item-action" onclick="openChatRoom('${c}')"><i class="fas fa-user-circle me-2"></i> ${c}</button>`);document.getElementById('chat-contacts').innerHTML=h;}); }
     let chatPartner=''; function openChatRoom(n){chatPartner=n;document.getElementById('chat-contact-view').style.display='none';document.getElementById('chat-room-view').style.display='block';document.getElementById('chat-partner-name').innerText=n;loadMessages();} function closeChatRoom(){document.getElementById('chat-contact-view').style.display='block';document.getElementById('chat-room-view').style.display='none';} function loadMessages(){document.getElementById('chat-messages').innerHTML='<small>Loading...</small>';fetch(`${API_URL}?action=get_chat&user1=${currentUser.nama}&user2=${chatPartner}`).then(r=>r.json()).then(res=>{let h='';res.data.forEach(m=>{let c=m.sender===currentUser.nama?'chat-me':'chat-other';h+=`<div class="d-flex flex-column"><div class="chat-bubble ${c}">${m.message}</div></div>`;});document.getElementById('chat-messages').innerHTML=h;});} function sendChat(){let m=document.getElementById('chat-input').value;if(!m)return;fetch(`${API_URL}?action=simpan_chat&sender=${currentUser.nama}&receiver=${chatPartner}&message=${m}`).then(()=>{document.getElementById('chat-input').value='';loadMessages();});}
     function openMood() { renderPage("Mood & Kesan", `<div class="text-center mb-4"><p class="small text-muted">Bagaimana perasaanmu?</p><div class="d-flex justify-content-center gap-3 mb-3"><i class="mood-icon fas fa-laugh-beam text-success" onclick="selMood(this,'Senang')"></i><i class="mood-icon fas fa-meh text-warning" onclick="selMood(this,'Biasa')"></i><i class="mood-icon fas fa-frown text-danger" onclick="selMood(this,'Sedih')"></i><i class="mood-icon fas fa-tired text-secondary" onclick="selMood(this,'Lelah')"></i></div><input type="hidden" id="f_mood"><input type="text" class="form-control mb-3 text-center" id="f_kesan" placeholder="Tulis kesan singkat..." required><button class="btn btn-primary w-100 rounded-pill" onclick="submitMood()">UPDATE STATUS</button></div><hr>${currentUser.role==='Guru'?'<h6 class="fw-bold small">Mood Siswa</h6><div id="list-mood-guru"></div>':''}`); if(currentUser.role==='Guru') loadMoodGuru(); }
@@ -258,11 +322,6 @@
     function openPublicList(t,n,i) { renderPage(n, `<div id="list-public">Loading...</div>`); fetch(`${API_URL}?action=get_public_data&type=${t}`).then(r=>r.json()).then(res=>{let h=res.data.length?'':'<div class="text-center text-muted mt-5">Kosong.</div>';res.data.forEach(d=>{h+=`<div class="card card-custom p-3"><div class="d-flex align-items-center mb-2"><i class="fas ${i} fa-lg me-3 text-secondary"></i><h6 class="fw-bold m-0">${d.col1}</h6></div><p class="small text-muted">${d.col2}</p><small class="text-primary">${d.col3.includes('http')?`<a href="${d.col3}" target="_blank">Buka Link</a>`:d.col3}</small></div>`});document.getElementById('list-public').innerHTML=h;}); }
     function openDiskusi() { renderPage("Ruang Diskusi", `<div class="mb-3"><textarea class="form-control mb-2" id="diskusi-konten" rows="2" placeholder="Apa yang Anda pikirkan?"></textarea><button class="btn btn-primary btn-sm w-100" onclick="postDiskusi()">POSTING</button></div><div id="list-diskusi"></div>`); loadDiskusi(); }
     function postDiskusi(){let c=document.getElementById('diskusi-konten').value;if(!c)return;setLoading(true);fetch(`${API_URL}?action=simpan_diskusi&nama=${currentUser.nama}&role=${currentUser.role}&konten=${c}`).then(r=>r.json()).then(res=>{setLoading(false);document.getElementById('diskusi-konten').value='';loadDiskusi();});} function loadDiskusi(){document.getElementById('list-diskusi').innerHTML='Loading...';fetch(`${API_URL}?action=get_diskusi`).then(r=>r.json()).then(res=>{let h='';res.data.forEach(d=>{let del=d.nama===currentUser.nama?`<button class="btn btn-link text-danger btn-sm p-0 ms-2" onclick="hapusDiskusi('${d.id}')">Hapus</button>`:'';h+=`<div class="card card-custom p-3 mb-2"><div class="d-flex justify-content-between"><small class="fw-bold text-primary">${d.nama}</small><small class="text-muted" style="font-size:10px;">${d.waktu.substring(0,10)}</small></div><p class="mb-2 mt-1 small">${d.konten}</p><div class="d-flex align-items-center"><i class="far fa-heart text-danger me-1"></i> <small>${d.likes}</small> ${del}</div></div>`});document.getElementById('list-diskusi').innerHTML=h;});} function hapusDiskusi(id){if(!confirm("Hapus?"))return;fetch(`${API_URL}?action=hapus_diskusi&id_post=${id}&nama=${currentUser.nama}`).then(r=>r.json()).then(res=>{alert(res.message);loadDiskusi();});}
-
-    function renderPage(title, content) { document.getElementById('pageTitle').innerText = title; document.getElementById('pageContent').innerHTML = content; showScreen('screen-generic'); }
-    function loadProfileData() { document.getElementById('editUsername').value=currentUser.username; document.getElementById('editPass').value=currentUser.password; document.getElementById('viewNama').value=currentUser.nama; document.getElementById('editJK').value=currentUser.jk; document.getElementById('editInfo').value=currentUser.info; document.getElementById('editAlamat').value=currentUser.alamat; document.getElementById('editHP').value=currentUser.hp; document.getElementById('editFotoPreview').src=localStorage.getItem('img_'+currentUser.username)||"https://via.placeholder.com/150"; }
-    function saveImageLocal(input) { if (input.files && input.files[0]) { let file = input.files[0]; var reader = new FileReader(); reader.onload = function (e) { try { localStorage.setItem('img_' + currentUser.username, e.target.result); document.getElementById('editFotoPreview').src = e.target.result; alert("Foto tersimpan di HP ini!"); } catch (err) { alert("Memori Penuh/Gagal Simpan"); } }; reader.readAsDataURL(file); } }
-    document.getElementById('formEdit').addEventListener('submit', function(e){ e.preventDefault(); setLoading(true); const p = new URLSearchParams({ action: "update", old_username: currentUser.username, new_username: document.getElementById('editUsername').value, password: document.getElementById('editPass').value, jk: document.getElementById('editJK').value, info: document.getElementById('editInfo').value, alamat: document.getElementById('editAlamat').value, hp: document.getElementById('editHP').value }); fetch(API_URL+"?"+p).then(r=>r.json()).then(res => { setLoading(false); if(res.status==='success') { currentUser.password = document.getElementById('editPass').value; currentUser.jk = document.getElementById('editJK').value; currentUser.info = document.getElementById('editInfo').value; currentUser.alamat = document.getElementById('editAlamat').value; currentUser.hp = document.getElementById('editHP').value; alert("Data Profil Tersimpan!"); initDashboard(); goBack(); } else { alert(res.message); } }).catch(err => { setLoading(false); alert("Error"); }); });
     function openPengembang() { let devPhoto = "https://lh3.googleusercontent.com/d/19RBb-asjqwYsSUzDd0ve7Y8dgimQ2W2m"; renderPage("Pengembang", `<div class="dev-card"><img src="${devPhoto}" class="dev-img"><h5 class="fw-bold mb-1">Muhammad Hasratul, S.Pd.,Gr.,M.M</h5><p class="small opacity-75 mb-3">Guru Bimbingan dan Konseling</p><div class="bg-white text-dark rounded-3 p-3 text-start shadow-sm mx-auto" style="max-width:300px;"><div class="mb-2"><small class="text-muted d-block">Asal</small><strong>Makassar</strong></div><div class="mb-0"><small class="text-muted d-block">Instansi</small><strong>UPT SPF SMP Negeri 16 Makassar</strong></div></div><div class="mt-4 small opacity-50">© 2026 Ruang Bersama</div></div>`); }
 </script>
 
