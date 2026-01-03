@@ -114,25 +114,10 @@
             </div>
             <div class="popup-guide-body">
                 <p class="small text-muted mb-4">Selamat datang di <strong>Ruang Bersama</strong>, rumah digital kita untuk tumbuh dan berbagi.</p>
-                
-                <div class="mb-3">
-                    <h6 class="fw-bold text-primary small mb-1"><i class="fas fa-user-graduate me-1"></i> Ruang Siswa</h6>
-                    <p class="small text-muted m-0" style="font-size:11px; line-height:1.4;">Gunakan <strong>NIS</strong> untuk masuk. Ini adalah ruang amanmu untuk Curhat, berbagi Ide cemerlang, Konseling privat, dan Diskusi seru dengan teman!</p>
-                </div>
-                
-                <div class="mb-3">
-                    <h6 class="fw-bold text-success small mb-1"><i class="fas fa-chalkboard-teacher me-1"></i> Ruang Guru</h6>
-                    <p class="small text-muted m-0" style="font-size:11px; line-height:1.4;">Masuk dengan <strong>NIP/Username</strong>. Pantau perkembangan siswa, dengarkan cerita mereka, dan bangun karakter positif bersama.</p>
-                </div>
-                
-                <div class="mb-3">
-                    <h6 class="fw-bold text-info small mb-1"><i class="fas fa-user-friends me-1"></i> Ruang Orangtua</h6>
-                    <p class="small text-muted m-0" style="font-size:11px; line-height:1.4;">Jadilah partner kami. Pantau aktivitas buah hati dengan menghubungkan akun menggunakan password siswa.</p>
-                </div>
-
-                <div class="alert alert-light border small p-2 mb-0" style="font-size:10px; background:#f8f9fa;">
-                    <i class="fas fa-shield-alt text-warning me-1"></i> <strong>Keamanan:</strong> Demi privasi, satu akun hanya dapat aktif di satu perangkat pada satu waktu.
-                </div>
+                <div class="mb-3"><h6 class="fw-bold text-primary small mb-1"><i class="fas fa-user-graduate me-1"></i> Ruang Siswa</h6><p class="small text-muted m-0" style="font-size:11px; line-height:1.4;">Gunakan <strong>NIS/Username</strong> untuk masuk. Ini adalah ruang amanmu untuk Curhat, berbagi Ide cemerlang, Konseling privat, dan Diskusi seru dengan teman!</p></div>
+                <div class="mb-3"><h6 class="fw-bold text-success small mb-1"><i class="fas fa-chalkboard-teacher me-1"></i> Ruang Guru</h6><p class="small text-muted m-0" style="font-size:11px; line-height:1.4;">Masuk dengan <strong>NIP/Username</strong>. Pantau perkembangan siswa, dengarkan cerita mereka, dan bangun karakter positif bersama.</p></div>
+                <div class="mb-3"><h6 class="fw-bold text-info small mb-1"><i class="fas fa-user-friends me-1"></i> Ruang Orangtua</h6><p class="small text-muted m-0" style="font-size:11px; line-height:1.4;">Jadilah partner kami. Pantau aktivitas buah hati dengan menghubungkan akun menggunakan password siswa.</p></div>
+                <div class="alert alert-light border small p-2 mb-0" style="font-size:10px; background:#f8f9fa;"><i class="fas fa-shield-alt text-warning me-1"></i> <strong>Keamanan:</strong> Demi privasi, satu akun hanya dapat aktif di satu perangkat pada satu waktu.</div>
             </div>
             <button class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm" onclick="document.getElementById('guide-popup').style.display='none'">SIAP MENJELAJAH! 🚀</button>
         </div>
@@ -143,25 +128,11 @@
     <div id="screen-login" class="screen active">
         <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 85vh;">
             <div class="mb-3 text-center">
-                <img src="https://lh3.googleusercontent.com/d/131xxAOTTB931TitQdbe2NUeevLyN4BhM" 
-                     class="login-logo" 
-                     alt="Logo Sekolah" 
-                     onerror="this.style.display='none'; document.getElementById('fallback-logo').style.display='flex';">
-                
-                <div id="fallback-logo" style="display:none; width: 90px; height: 90px; background: var(--primary-grad); border-radius: 25px; margin: 0 auto 20px; align-items: center; justify-content: center; color: white; font-size: 36px; box-shadow: 0 10px 20px rgba(118, 75, 162, 0.3);">
-                    <i class="fas fa-school"></i>
-                </div>
-
-                <h3 class="fw-bold mt-2 mb-1 text-dark">RUANG BERSAMA</h3>
-                <p class="text-muted small">Sistem Informasi Sekolah Terpadu</p>
+                <img src="https://lh3.googleusercontent.com/d/131xxAOTTB931TitQdbe2NUeevLyN4BhM" class="login-logo" alt="Logo Sekolah" onerror="this.style.display='none'; document.getElementById('fallback-logo').style.display='flex';">
+                <div id="fallback-logo" style="display:none; width: 90px; height: 90px; background: var(--primary-grad); border-radius: 25px; margin: 0 auto 20px; align-items: center; justify-content: center; color: white; font-size: 36px; box-shadow: 0 10px 20px rgba(118, 75, 162, 0.3);"><i class="fas fa-school"></i></div>
+                <h3 class="fw-bold mt-2 mb-1 text-dark">RUANG BERSAMA</h3><p class="text-muted small">Sistem Informasi Sekolah Terpadu</p>
             </div>
-            
-            <form id="formLogin" class="w-100 px-2">
-                <div class="form-floating mb-3"><input type="text" class="form-control" id="uName" placeholder="Username" required><label class="text-muted">Username</label></div>
-                <div class="form-floating mb-4"><input type="password" class="form-control" id="uPass" placeholder="Password" required><label class="text-muted">Password</label></div>
-                <button type="submit" class="btn btn-primary w-100 py-3 rounded-4 fw-bold shadow">MASUK APLIKASI</button>
-            </form>
-
+            <form id="formLogin" class="w-100 px-2"><div class="form-floating mb-3"><input type="text" class="form-control" id="uName" placeholder="Username" required><label class="text-muted">Username</label></div><div class="form-floating mb-4"><input type="password" class="form-control" id="uPass" placeholder="Password" required><label class="text-muted">Password</label></div><button type="submit" class="btn btn-primary w-100 py-3 rounded-4 fw-bold shadow">MASUK APLIKASI</button></form>
             <div class="mt-3 w-100 px-2"><button onclick="document.getElementById('guide-popup').style.display='flex'" class="btn btn-light w-100 py-2 rounded-4 border fw-bold text-secondary" style="font-size:12px;"><i class="fas fa-info-circle me-1"></i> PANDUAN & INFO APLIKASI</button></div>
             <div class="mt-4 p-3 bg-light rounded-4 border w-100 text-center"><h6 class="fw-bold m-0" style="color:#764ba2; font-size:14px;">RUANG KITA - KARYA KITA</h6><small class="text-warning fw-bold d-block mt-1" style="letter-spacing:1px; font-size:10px;">SEJUTA INSPIRASI</small></div>
             <div class="mt-4 text-center"><p class="small text-muted mb-1" style="font-size: 11px;">Jika lupa username dan password,<br>silahkan hubungi admin:</p><a href="https://wa.me/6285259259767" target="_blank" class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold"><i class="fab fa-whatsapp me-1"></i> 0852-5925-9767</a></div>
@@ -170,7 +141,7 @@
 
     <div id="screen-dashboard" class="screen">
         <div class="profile-header"><div class="profile-info"><h5 class="fw-bold m-0 text-dark" id="dashNama">User</h5><span class="badge bg-primary" id="dashRole">Role</span><small class="d-block fw-bold text-secondary mt-1" id="dashInfo">-</small><small class="d-block text-muted text-truncate mt-1" id="dashKesan">...</small></div><img src="https://via.placeholder.com/150" id="dashFoto" class="profile-img-lg shadow-sm"></div>
-        <div class="card bg-primary text-white border-0 shadow-sm mb-3 rounded-4" style="background: linear-gradient(135deg, #0d6efd, #0056b3);"><div class="card-body py-3 d-flex justify-content-between align-items-center"><div><h5 class="fw-bold m-0">13 RUANG</h5><small class="opacity-75">Aktivitas & Layanan</small></div><i class="fas fa-school fa-2x opacity-50"></i></div></div>
+        <div class="card bg-primary text-white border-0 shadow-sm mb-3 rounded-4" style="background: linear-gradient(135deg, #0d6efd, #0056b3);"><div class="card-body py-3 d-flex justify-content-between align-items-center"><div><h5 class="fw-bold m-0">Ruang Bersama</h5><small class="opacity-75">Mappaguru Online</small></div><i class="fas fa-school fa-2x opacity-50"></i></div></div>
         <div class="menu-grid" id="menuContainer"></div>
         <div class="d-grid gap-2 mb-4"><button type="button" onclick="confirmLogout()" class="btn btn-outline-danger py-3 rounded-4 fw-bold shadow-sm bg-white"><i class="fas fa-sign-out-alt me-2"></i> KELUAR APLIKASI</button></div>
     </div>
@@ -215,7 +186,7 @@
             if(res.status==='success') { 
                 currentUser=res.data; currentUser.role=res.role; currentUser.token=res.token;
                 localStorage.setItem('user_token', res.token);
-                // WORDING SELAMAT DATANG (BARU)
+                // WORDING HIDUP: SELAMAT DATANG
                 showPopup("Selamat Datang Kembali!", `Halo ${currentUser.nama}, Senang melihatmu. Mari mulai aktivitas positif hari ini.`, "fas fa-smile-beam text-primary", function(){ initDashboard(); showScreen('screen-dashboard'); startSessionCheck(); }); 
             } else { showToast(res.message, 'error'); }
         }).catch(err=>{setLoading(false); alert("Gagal koneksi server.");});
@@ -274,8 +245,6 @@
         document.getElementById('menuContainer').innerHTML=h;
     }
 
-    // --- FUNGSI-FUNGSI UTAMA ---
-    
     function submitGeneral(act, data, cb){ 
         setLoading(true); 
         data.action=act; data.username=currentUser.username; data.role=currentUser.role; data.nama=currentUser.nama; 
@@ -383,8 +352,51 @@
     function renderPage(title, content) { document.getElementById('pageTitle').innerText = title; document.getElementById('pageContent').innerHTML = content; showScreen('screen-generic'); }
     function loadProfileData() { document.getElementById('editUsername').value=currentUser.username; document.getElementById('editPass').value=currentUser.password; document.getElementById('viewNama').value=currentUser.nama; document.getElementById('editJK').value=currentUser.jk; document.getElementById('editInfo').value=currentUser.info; document.getElementById('editAlamat').value=currentUser.alamat; document.getElementById('editHP').value=currentUser.hp; document.getElementById('editFotoPreview').src=localStorage.getItem('img_'+currentUser.username)||"https://via.placeholder.com/150"; }
     
-    // --- PENGEMBANG PRO (LINK lh3 FIX) ---
+    // --- KOMPRESI GAMBAR LOKAL ---
+    function saveImageLocal(input) { 
+        if (input.files && input.files[0]) { 
+            let file = input.files[0]; 
+            // Validasi Ukuran (Max 2MB sebelum kompresi)
+            if(file.size > 2 * 1024 * 1024) {
+                showToast("Ukuran foto terlalu besar (Max 2MB)", 'error');
+                return;
+            }
+
+            var reader = new FileReader(); 
+            reader.onload = function (e) { 
+                // Kompresi Gambar agar muat di LocalStorage
+                var img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    var ctx = canvas.getContext('2d');
+                    var maxWidth = 300; // Resize ke 300px
+                    var scaleSize = maxWidth / img.width;
+                    canvas.width = maxWidth;
+                    canvas.height = img.height * scaleSize;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    var dataUrl = canvas.toDataURL('image/jpeg', 0.7); // Kompresi kualitas 70%
+                    
+                    try { 
+                        localStorage.setItem('img_' + currentUser.username, dataUrl); 
+                        document.getElementById('editFotoPreview').src = dataUrl; 
+                        // Update Dashboard Image Immediately
+                        document.getElementById('dashFoto').src = dataUrl;
+                        showToast("Foto Profil Berhasil Disimpan!", 'success'); 
+                    } catch (err) { 
+                        showToast("Memori Penuh, gunakan foto lebih kecil", 'error'); 
+                    }
+                }
+            }; 
+            reader.readAsDataURL(file); 
+        } 
+    }
+
+    document.getElementById('formEdit').addEventListener('submit', function(e){ e.preventDefault(); setLoading(true); const p = new URLSearchParams({ action: "update", old_username: currentUser.username, new_username: document.getElementById('editUsername').value, password: document.getElementById('editPass').value, jk: document.getElementById('editJK').value, info: document.getElementById('editInfo').value, alamat: document.getElementById('editAlamat').value, hp: document.getElementById('editHP').value }); fetch(API_URL+"?"+p).then(r=>r.json()).then(res => { setLoading(false); if(res.status==='success') { currentUser.password = document.getElementById('editPass').value; currentUser.jk = document.getElementById('editJK').value; currentUser.info = document.getElementById('editInfo').value; currentUser.alamat = document.getElementById('editAlamat').value; currentUser.hp = document.getElementById('editHP').value; showToast("Profil Disimpan!", 'success'); initDashboard(); goBack(); } else { showToast(res.message, 'error'); } }).catch(err => { setLoading(false); alert("Error"); }); });
+    
+    // --- PENGEMBANG PRO (FIXED LINK) ---
     function openPengembang() { 
+        // Menggunakan lh3.googleusercontent.com
         let devPhoto = "https://lh3.googleusercontent.com/d/19RBb-asjqwYsSUzDd0ve7Y8dgimQ2W2m"; 
         let html = `
         <div class="dev-card-pro">
