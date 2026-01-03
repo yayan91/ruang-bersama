@@ -21,25 +21,18 @@
         }
         body { background-color: var(--bg-body); font-family: 'Poppins', sans-serif; font-size: 14px; -webkit-tap-highlight-color: transparent; }
         .mobile-container { max-width: 480px; margin: 0 auto; background: #ffffff; min-height: 100vh; position: relative; box-shadow: 0 0 50px rgba(0,0,0,0.08); display: flex; flex-direction: column; overflow: hidden; }
-        
-        /* HEADER & FOOTER */
         .app-header-date { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 15px 25px; font-weight: 600; color: var(--accent-color); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
         .app-footer { background: #fff; padding: 25px 20px; text-align: center; border-top: none; margin-top: auto; box-shadow: 0 -10px 30px rgba(0,0,0,0.03); position: relative; z-index: 50; }
         .app-footer h6 { font-weight: 700; color: var(--accent-color); letter-spacing: 1.5px; margin-bottom: 5px; font-size: 12px; }
         .app-footer small { color: #b2bec3; font-size: 10px; font-weight: 500; }
-
         .screen { display: none; padding: 25px; animation: fadeIn 0.4s ease-out; flex-grow: 1; overflow-y: auto; }
         .active { display: block; }
         @keyframes fadeIn { from {opacity:0; transform:translateY(15px);} to {opacity:1; transform:translateY(0);} }
-
-        /* LOADER MANIS */
         .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); z-index: 9999; display: none; align-items: center; justify-content: center; flex-direction: column; }
         .spinner-sweet { width: 60px; height: 60px; border: 4px solid rgba(118, 75, 162, 0.1); border-left-color: var(--accent-color); border-radius: 50%; animation: spin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite; margin-bottom: 20px; }
         .loading-text { font-size: 12px; font-weight: 700; letter-spacing: 2px; background: var(--primary-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: pulseText 1.5s ease-in-out infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes pulseText { 0%, 100% { opacity: 0.6; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1); } }
-
-        /* TOAST & POPUP */
         #toast-container { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; z-index: 9999; pointer-events: none; }
         .toast-box { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 15px; padding: 15px 20px; margin-bottom: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; align-items: center; animation: slideInDown 0.4s; border-left: 5px solid; }
         .toast-success { border-left-color: var(--success-color); } .toast-error { border-left-color: var(--error-color); }
@@ -50,13 +43,10 @@
         .popup-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .popup-content { background: white; width: 85%; max-width: 340px; border-radius: 25px; padding: 30px 25px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); animation: popIn 0.3s; position: relative; }
         @keyframes popIn { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
-
-        /* COMPONENTS */
         .profile-header { display: flex; align-items: center; margin-bottom: 25px; margin-top: 10px; }
         .profile-info { flex-grow: 1; }
         @keyframes wiggly { 0% { transform: rotate(0deg); } 25% { transform: rotate(-3deg); } 50% { transform: rotate(0deg); } 75% { transform: rotate(3deg); } 100% { transform: rotate(0deg); } }
         .profile-img-lg { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 4px solid #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.15); margin-left: 15px; background: #eee; cursor: pointer; animation: wiggly 3s ease-in-out infinite; }
-        
         .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 40px; }
         .menu-item { background: #fff; border: 1px solid #f0f0f0; border-radius: 20px; height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .menu-item:active { transform: scale(0.95); }
@@ -69,12 +59,8 @@
         .scrollable-list { max-height: 60vh; overflow-y: auto; padding-right: 5px; padding-bottom: 20px; }
         .scrollable-list::-webkit-scrollbar { width: 4px; }
         .scrollable-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-        
-        /* LOGO */
         .login-logo { width: 110px; height: 110px; object-fit: contain; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
         @keyframes float { 0% {transform: translateY(0px);} 50% {transform: translateY(-8px);} 100% {transform: translateY(0px);} }
-        
-        /* MOOD & DEV */
         .mood-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 20px 0 30px; }
         .mood-icon { font-size: 50px; cursor: pointer; transition: all 0.4s; opacity: 0.5; filter: grayscale(80%); }
         .mood-icon:hover { opacity: 1; filter: grayscale(0%); transform: scale(1.1); }
@@ -90,11 +76,7 @@
 <body>
 
 <div class="mobile-container">
-    <div id="loader" class="loading-overlay">
-        <div class="spinner-sweet"></div>
-        <p class="loading-text">MENYIAPKAN RUANG...</p>
-    </div>
-    
+    <div id="loader" class="loading-overlay"><div class="spinner-sweet"></div><p class="loading-text">MENYIAPKAN RUANG...</p></div>
     <div id="toast-container"></div>
     <div id="custom-popup" class="popup-overlay"><div class="popup-content"><div id="popup-icon" class="mb-3 text-primary" style="font-size: 50px;"></div><h5 id="popup-title" class="fw-bold mb-2">Title</h5><p id="popup-msg" class="text-muted small mb-4">Msg</p><button id="popup-btn" class="btn btn-primary w-100 rounded-pill fw-bold shadow">OK</button></div></div>
     
@@ -108,13 +90,10 @@
 
     <div id="guide-popup" class="popup-overlay" style="display:none;">
         <div class="popup-content" style="text-align: left;">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold m-0 text-dark"><i class="fas fa-book-open text-primary me-2"></i> PANDUAN PENGGUNA</h5>
-                <button class="btn btn-sm btn-light rounded-circle" onclick="document.getElementById('guide-popup').style.display='none'"><i class="fas fa-times"></i></button>
-            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3"><h5 class="fw-bold m-0 text-dark"><i class="fas fa-book-open text-primary me-2"></i> PANDUAN PENGGUNA</h5><button class="btn btn-sm btn-light rounded-circle" onclick="document.getElementById('guide-popup').style.display='none'"><i class="fas fa-times"></i></button></div>
             <div class="popup-guide-body">
                 <p class="small text-muted mb-4">Selamat datang di <strong>Ruang Bersama</strong>, rumah digital kita untuk tumbuh dan berbagi.</p>
-                <div class="mb-3"><h6 class="fw-bold text-primary small mb-1"><i class="fas fa-user-graduate me-1"></i> Ruang Siswa</h6><p class="small text-muted m-0" style="font-size:11px; line-height:1.4;">Gunakan <strong>NIS/Username</strong> untuk masuk. Ini adalah ruang amanmu untuk Curhat, berbagi Ide cemerlang, Konseling privat, dan Diskusi seru dengan teman!</p></div>
+                <div class="mb-3"><h6 class="fw-bold text-primary small mb-1"><i class="fas fa-user-graduate me-1"></i> Ruang Siswa</h6><p class="small text-muted m-0" style="font-size:11px; line-height:1.4;">Gunakan <strong>NIS</strong> untuk masuk. Ini adalah ruang amanmu untuk Curhat, berbagi Ide cemerlang, Konseling privat, dan Diskusi seru dengan teman!</p></div>
                 <div class="mb-3"><h6 class="fw-bold text-success small mb-1"><i class="fas fa-chalkboard-teacher me-1"></i> Ruang Guru</h6><p class="small text-muted m-0" style="font-size:11px; line-height:1.4;">Masuk dengan <strong>NIP/Username</strong>. Pantau perkembangan siswa, dengarkan cerita mereka, dan bangun karakter positif bersama.</p></div>
                 <div class="mb-3"><h6 class="fw-bold text-info small mb-1"><i class="fas fa-user-friends me-1"></i> Ruang Orangtua</h6><p class="small text-muted m-0" style="font-size:11px; line-height:1.4;">Jadilah partner kami. Pantau aktivitas buah hati dengan menghubungkan akun menggunakan password siswa.</p></div>
                 <div class="alert alert-light border small p-2 mb-0" style="font-size:10px; background:#f8f9fa;"><i class="fas fa-shield-alt text-warning me-1"></i> <strong>Keamanan:</strong> Demi privasi, satu akun hanya dapat aktif di satu perangkat pada satu waktu.</div>
@@ -130,7 +109,7 @@
             <div class="mb-3 text-center">
                 <img src="https://lh3.googleusercontent.com/d/131xxAOTTB931TitQdbe2NUeevLyN4BhM" class="login-logo" alt="Logo Sekolah" onerror="this.style.display='none'; document.getElementById('fallback-logo').style.display='flex';">
                 <div id="fallback-logo" style="display:none; width: 90px; height: 90px; background: var(--primary-grad); border-radius: 25px; margin: 0 auto 20px; align-items: center; justify-content: center; color: white; font-size: 36px; box-shadow: 0 10px 20px rgba(118, 75, 162, 0.3);"><i class="fas fa-school"></i></div>
-                <h3 class="fw-bold mt-2 mb-1 text-dark">RUANG BERSAMA</h3><p class="text-muted small">UPT SPF SMP NEGERI 16 MAKASSAR</p>
+                <h3 class="fw-bold mt-2 mb-1 text-dark">RUANG BERSAMA</h3><p class="text-muted small">Sistem Informasi Sekolah Terpadu</p>
             </div>
             <form id="formLogin" class="w-100 px-2"><div class="form-floating mb-3"><input type="text" class="form-control" id="uName" placeholder="Username" required><label class="text-muted">Username</label></div><div class="form-floating mb-4"><input type="password" class="form-control" id="uPass" placeholder="Password" required><label class="text-muted">Password</label></div><button type="submit" class="btn btn-primary w-100 py-3 rounded-4 fw-bold shadow">MASUK APLIKASI</button></form>
             <div class="mt-3 w-100 px-2"><button onclick="document.getElementById('guide-popup').style.display='flex'" class="btn btn-light w-100 py-2 rounded-4 border fw-bold text-secondary" style="font-size:12px;"><i class="fas fa-info-circle me-1"></i> PANDUAN & INFO APLIKASI</button></div>
@@ -141,7 +120,7 @@
 
     <div id="screen-dashboard" class="screen">
         <div class="profile-header"><div class="profile-info"><h5 class="fw-bold m-0 text-dark" id="dashNama">User</h5><span class="badge bg-primary" id="dashRole">Role</span><small class="d-block fw-bold text-secondary mt-1" id="dashInfo">-</small><small class="d-block text-muted text-truncate mt-1" id="dashKesan">...</small></div><img src="https://via.placeholder.com/150" id="dashFoto" class="profile-img-lg shadow-sm"></div>
-        <div class="card bg-primary text-white border-0 shadow-sm mb-3 rounded-4" style="background: linear-gradient(135deg, #0d6efd, #0056b3);"><div class="card-body py-3 d-flex justify-content-between align-items-center"><div><h5 class="fw-bold m-0">Ruang Bersama</h5><small class="opacity-75">Mappaguru Online</small></div><i class="fas fa-school fa-2x opacity-50"></i></div></div>
+        <div class="card bg-primary text-white border-0 shadow-sm mb-3 rounded-4" style="background: linear-gradient(135deg, #0d6efd, #0056b3);"><div class="card-body py-3 d-flex justify-content-between align-items-center"><div><h5 class="fw-bold m-0">13 RUANG</h5><small class="opacity-75">Aktivitas & Layanan</small></div><i class="fas fa-school fa-2x opacity-50"></i></div></div>
         <div class="menu-grid" id="menuContainer"></div>
         <div class="d-grid gap-2 mb-4"><button type="button" onclick="confirmLogout()" class="btn btn-outline-danger py-3 rounded-4 fw-bold shadow-sm bg-white"><i class="fas fa-sign-out-alt me-2"></i> KELUAR APLIKASI</button></div>
     </div>
@@ -186,7 +165,6 @@
             if(res.status==='success') { 
                 currentUser=res.data; currentUser.role=res.role; currentUser.token=res.token;
                 localStorage.setItem('user_token', res.token);
-                // WORDING HIDUP: SELAMAT DATANG
                 showPopup("Selamat Datang Kembali!", `Halo ${currentUser.nama}, Senang melihatmu. Mari mulai aktivitas positif hari ini.`, "fas fa-smile-beam text-primary", function(){ initDashboard(); showScreen('screen-dashboard'); startSessionCheck(); }); 
             } else { showToast(res.message, 'error'); }
         }).catch(err=>{setLoading(false); alert("Gagal koneksi server.");});
@@ -356,36 +334,17 @@
     function saveImageLocal(input) { 
         if (input.files && input.files[0]) { 
             let file = input.files[0]; 
-            // Validasi Ukuran (Max 2MB sebelum kompresi)
-            if(file.size > 2 * 1024 * 1024) {
-                showToast("Ukuran foto terlalu besar (Max 2MB)", 'error');
-                return;
-            }
-
+            if(file.size > 2 * 1024 * 1024) { showToast("Ukuran foto terlalu besar (Max 2MB)", 'error'); return; }
             var reader = new FileReader(); 
             reader.onload = function (e) { 
-                // Kompresi Gambar agar muat di LocalStorage
-                var img = new Image();
-                img.src = e.target.result;
+                var img = new Image(); img.src = e.target.result;
                 img.onload = function() {
-                    var canvas = document.createElement('canvas');
-                    var ctx = canvas.getContext('2d');
-                    var maxWidth = 300; // Resize ke 300px
-                    var scaleSize = maxWidth / img.width;
-                    canvas.width = maxWidth;
-                    canvas.height = img.height * scaleSize;
+                    var canvas = document.createElement('canvas'); var ctx = canvas.getContext('2d');
+                    var maxWidth = 300; var scaleSize = maxWidth / img.width;
+                    canvas.width = maxWidth; canvas.height = img.height * scaleSize;
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    var dataUrl = canvas.toDataURL('image/jpeg', 0.7); // Kompresi kualitas 70%
-                    
-                    try { 
-                        localStorage.setItem('img_' + currentUser.username, dataUrl); 
-                        document.getElementById('editFotoPreview').src = dataUrl; 
-                        // Update Dashboard Image Immediately
-                        document.getElementById('dashFoto').src = dataUrl;
-                        showToast("Foto Profil Berhasil Disimpan!", 'success'); 
-                    } catch (err) { 
-                        showToast("Memori Penuh, gunakan foto lebih kecil", 'error'); 
-                    }
+                    var dataUrl = canvas.toDataURL('image/jpeg', 0.7); 
+                    try { localStorage.setItem('img_' + currentUser.username, dataUrl); document.getElementById('editFotoPreview').src = dataUrl; document.getElementById('dashFoto').src = dataUrl; showToast("Foto Profil Berhasil Disimpan!", 'success'); } catch (err) { showToast("Memori Penuh, gunakan foto lebih kecil", 'error'); }
                 }
             }; 
             reader.readAsDataURL(file); 
@@ -394,10 +353,9 @@
 
     document.getElementById('formEdit').addEventListener('submit', function(e){ e.preventDefault(); setLoading(true); const p = new URLSearchParams({ action: "update", old_username: currentUser.username, new_username: document.getElementById('editUsername').value, password: document.getElementById('editPass').value, jk: document.getElementById('editJK').value, info: document.getElementById('editInfo').value, alamat: document.getElementById('editAlamat').value, hp: document.getElementById('editHP').value }); fetch(API_URL+"?"+p).then(r=>r.json()).then(res => { setLoading(false); if(res.status==='success') { currentUser.password = document.getElementById('editPass').value; currentUser.jk = document.getElementById('editJK').value; currentUser.info = document.getElementById('editInfo').value; currentUser.alamat = document.getElementById('editAlamat').value; currentUser.hp = document.getElementById('editHP').value; showToast("Profil Disimpan!", 'success'); initDashboard(); goBack(); } else { showToast(res.message, 'error'); } }).catch(err => { setLoading(false); alert("Error"); }); });
     
-    // --- PENGEMBANG PRO (FIXED LINK) ---
+    // --- PENGEMBANG PRO (LINK FIXED) ---
     function openPengembang() { 
-        // Menggunakan lh3.googleusercontent.com
-        let devPhoto = "https://lh3.googleusercontent.com/d/19RBb-asjqwYsSUzDd0ve7Y8dgimQ2W2m"; 
+        let devPhoto = "https://drive.google.com/uc?export=view&id=19RBb-asjqwYsSUzDd0ve7Y8dgimQ2W2m"; 
         let html = `
         <div class="dev-card-pro">
             <div class="dev-header-bg"></div>
@@ -432,4 +390,3 @@
 
 </body>
 </html>
-
