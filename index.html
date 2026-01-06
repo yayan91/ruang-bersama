@@ -71,6 +71,35 @@
         .dev-img-pro { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 4px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.15); background: #fff; }
         .dev-badge { background: #e3f2fd; color: #1565c0; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 600; display: inline-block; margin-bottom: 15px; letter-spacing: 0.5px; }
         .popup-guide-body { max-height: 300px; overflow-y: auto; text-align: left; margin-bottom: 20px; padding-right: 10px; }
+		/* --- NOTIFIKASI STYLES --- */
+		.notification-badge {
+		position: absolute; top: 15px; right: 25px;
+		background-color: #ff3b30; color: white;
+		border-radius: 50%; width: 18px; height: 18px;
+		font-size: 10px; display: flex; align-items: center;
+		justify-content: center; border: 2px solid #fff;
+		font-weight: bold; animation: popIn 0.3s;
+		z-index: 105; /* Di atas icon lonceng */
+	}
+		.menu-badge {
+		position: absolute; top: 10px; right: 10px;
+		background-color: #ff3b30; width: 12px; height: 12px;
+		border-radius: 50%; border: 2px solid #fff;
+		display: none; /* Default sembunyi */
+	}
+		.menu-item { position: relative; } /* Agar badge menu nempel di kotak */
+		#notif-dropdown {
+		position: absolute; top: 60px; right: 20px;
+		width: 280px; background: white; border-radius: 15px;
+		box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+		z-index: 1000; display: none; overflow: hidden;
+		border: 1px solid #eee;
+	}
+		.notif-header { padding: 15px; background: #f8f9fa; border-bottom: 1px solid #eee; font-weight: bold; color: var(--text-dark); display: flex; justify-content: space-between; align-items: center;}
+		.notif-list { max-height: 300px; overflow-y: auto; }
+		.notif-item { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 11px; color: #555; cursor: pointer; transition:0.2s; }
+		.notif-item:hover { background: #f9f9f9; }
+		.notif-item strong { display: block; color: var(--accent-color); margin-bottom: 2px; }
     </style>
 </head>
 <body>
@@ -102,7 +131,20 @@
         </div>
     </div>
 
-    <div class="app-header-date"><span><i class="far fa-calendar-alt me-2"></i> <span id="headerDate">...</span></span><i class="fas fa-bell text-secondary opacity-50"></i></div>
+    <div class="app-header-date">
+    <span><i class="far fa-calendar-alt me-2"></i> <span id="headerDate">...</span></span>
+    <div style="position: relative; cursor: pointer;" onclick="toggleNotifDropdown()">
+        <i class="fas fa-bell text-secondary fa-lg"></i>
+        <div id="bell-badge" class="notification-badge" style="display: none;">0</div>
+    </div>
+</div>
+
+<div id="notif-dropdown">
+    <div class="notif-header">Notifikasi <i class="fas fa-times" style="cursor:pointer;" onclick="toggleNotifDropdown()"></i></div>
+    <div id="notif-list-content" class="notif-list">
+        <div class="p-3 text-center text-muted small">Tidak ada notifikasi baru</div>
+    </div>
+</div>
 
     <div id="screen-login" class="screen active">
         <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 85vh;">
@@ -333,9 +375,96 @@
             </div>
         </div>`;
         renderPage("Pengembang", html); 
+	// ===========================================
+    // SISTEM NOTIFIKASI REALTIME (POLLING)
+    // ===========================================
+    let notifInterval = null;
+
+    function startNotificationService() {
+        if(notifInterval) clearInterval(notifInterval);
+        checkNotifications(); // Cek langsung saat login
+        notifInterval = setInterval(checkNotifications, 10000); // Cek tiap 10 detik
     }
+
+    function checkNotifications() {
+        if(!currentUser) return;
+        // Panggil Backend diam-diam
+        fetch(`${API_URL}?action=get_notifications&role=${currentUser.role}&username=${currentUser.username}&nama=${currentUser.nama}`)
+        .then(r=>r.json()).then(res => {
+            if(res.status === 'success') {
+                updateBadges(res.data);
+            }
+        });
+    }
+
+    function updateBadges(data) {
+        // 1. Badge Lonceng Utama
+        let bell = document.getElementById('bell-badge');
+        if(data.total > 0) {
+            bell.innerText = data.total > 9 ? "9+" : data.total;
+            bell.style.display = 'flex';
+        } else {
+            bell.style.display = 'none';
+        }
+
+        // 2. Badge per Menu (Kita update fungsi initDashboard sedikit untuk ID, 
+        // tapi cara cepatnya kita pakai Selector querySelectorAll karena urutan menu tetap)
+        // Urutan menu di menuActions: Ide[0], Rasa[1], Aspirasi[2], Evaluasi[3], Ortu[4], Konseling[5], Chat[6], Mood[7], Baca[8]... Diskusi[12]
+        let menus = document.querySelectorAll('.menu-item');
+        if(menus.length > 0) {
+            // Helper untuk show/hide titik merah di menu
+            let setMenuBadge = (index, count) => {
+                // Cek apakah sudah ada badge di menu ini
+                let b = menus[index].querySelector('.menu-badge');
+                if(!b) {
+                    b = document.createElement('div');
+                    b.className = 'menu-badge';
+                    menus[index].appendChild(b);
+                }
+                b.style.display = (count > 0) ? 'block' : 'none';
+            };
+
+            setMenuBadge(0, data.badges.ide);       // Ide
+            setMenuBadge(1, data.badges.rasa);      // Rasa
+            setMenuBadge(2, data.badges.aspirasi);  // Aspirasi
+            setMenuBadge(3, data.badges.evaluasi);  // Evaluasi
+            setMenuBadge(4, data.badges.ortu);      // Ortu
+            setMenuBadge(5, data.badges.konseling); // Konseling
+            setMenuBadge(6, data.badges.chat);      // Chat
+            setMenuBadge(12, data.badges.diskusi);  // Diskusi
+        }
+
+        // 3. Isi List Dropdown Lonceng
+        let listHtml = '';
+        if(data.items.length > 0) {
+            data.items.forEach(item => {
+                listHtml += `<div class="notif-item"><strong><i class="fas fa-circle text-primary" style="font-size:6px; vertical-align:middle; margin-right:5px;"></i> Info Baru</strong>${item}</div>`;
+            });
+        } else if (data.total > 0) {
+             listHtml = `<div class="p-3 text-center text-muted small">Ada ${data.total} aktivitas baru di menu. Cek tanda merah!</div>`;
+        } else {
+            listHtml = `<div class="p-3 text-center text-muted small">Belum ada notifikasi baru</div>`;
+        }
+        document.getElementById('notif-list-content').innerHTML = listHtml;
+    }
+
+    function toggleNotifDropdown() {
+        let d = document.getElementById('notif-dropdown');
+        d.style.display = (d.style.display === 'block') ? 'none' : 'block';
+    }
+
+    // UPDATE FUNGSI LOGIN: Tambahkan startNotificationService() saat login sukses
+    // Carilah baris: showPopup("Selamat Datang Kembali!", ... 
+    // Pastikan di dalamnya dipanggil startNotificationService();
+    // Jika Bapak pakai kode saya yg sebelumnya, cukup tambahkan di fungsi initDashboard() di baris paling bawah.
+    
+    // UPDATE SAYA: Saya akan menimpa/override initDashboard yang lama agar otomatis jalan
+    const originalInitDashboard = initDashboard;
+    initDashboard = function() {
+        originalInitDashboard(); // Jalankan kode lama
+        startNotificationService(); // Tambahan service notifikasi
+    };
 </script>
 
 </body>
 </html>
-
