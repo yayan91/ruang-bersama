@@ -72,12 +72,11 @@
         .dev-badge { background: #e3f2fd; color: #1565c0; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 600; display: inline-block; margin-bottom: 15px; letter-spacing: 0.5px; }
         .popup-guide-body { max-height: 300px; overflow-y: auto; text-align: left; margin-bottom: 20px; padding-right: 10px; }
         
-        /* NOTIFICATION STYLES */
         .notification-badge { position: absolute; top: 15px; right: 25px; background-color: #ff3b30; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; font-weight: bold; animation: popIn 0.3s; z-index: 105; }
         .menu-badge { position: absolute; top: 10px; right: 10px; background-color: #ff3b30; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; display: none; }
         .menu-item { position: relative; } 
         #notif-dropdown { position: absolute; top: 60px; right: 20px; width: 280px; background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 1000; display: none; overflow: hidden; border: 1px solid #eee; }
-        .notif-header { padding: 15px; background: #f8f9fa; border-bottom: 1px solid #eee; font-weight: bold; color: var(--text-dark); display: flex; justify-content: space-between; align-items: center;}
+        .notif-header { padding: 10px 15px; background: #f8f9fa; border-bottom: 1px solid #eee; font-weight: bold; color: var(--text-dark); display: flex; flex-direction: column; align-items: start;}
         .notif-list { max-height: 300px; overflow-y: auto; }
         .notif-item { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 11px; color: #555; cursor: pointer; transition:0.2s; }
         .notif-item:hover { background: #f9f9f9; }
@@ -122,7 +121,10 @@
     </div>
 
     <div id="notif-dropdown">
-        <div class="notif-header">Notifikasi <i class="fas fa-times" style="cursor:pointer;" onclick="toggleNotifDropdown()"></i></div>
+        <div class="notif-header">
+            <div class="d-flex justify-content-between w-100 mb-2"><span>Notifikasi</span><i class="fas fa-times" style="cursor:pointer;" onclick="toggleNotifDropdown()"></i></div>
+            <button class="btn btn-sm btn-link w-100 text-decoration-none border rounded" onclick="markAllRead()" style="font-size:10px;">Tandai Sudah Baca Semua</button>
+        </div>
         <div id="notif-list-content" class="notif-list">
             <div class="p-3 text-center text-muted small">Tidak ada notifikasi baru</div>
         </div>
@@ -157,7 +159,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // ===========================================
-    // SCRIPT UTAMA V30 - JANGAN LUPA ISI URL DI BAWAH
+    // SCRIPT UTAMA V32 - MASUKKAN URL ANDA DI SINI
     // ===========================================
     const API_URL = "https://script.google.com/macros/s/AKfycbyZrFQ0yKPZv4P7SjrznED21TEtStkoOTLTZDd6hPIIEnI3ni1r3AMo4baXACbsc7_U/exec"; 
 
@@ -244,7 +246,7 @@
             h+=`<div class="menu-item" onclick="window.menuActions[${i}]()"><i class="fas ${m.i}" style="color:${m.c}"></i><span>${m.n}</span></div>`;
         });
         document.getElementById('menuContainer').innerHTML=h;
-        startNotificationService(); // NOTIF START
+        startNotificationService(); 
     }
 
     function submitGeneral(act, data, cb){ setLoading(true); data.action=act; data.username=currentUser.username; data.role=currentUser.role; data.nama=currentUser.nama; const p=new URLSearchParams(data); fetch(API_URL+"?"+p).then(r=>r.json()).then(res=>{ setLoading(false); if(res.status === 'success') { showToast(res.message, 'success'); if(cb)cb(); } else { showToast(res.message, 'error'); } }); }
@@ -273,10 +275,12 @@
     function hapusRasa(id){ confirmAction("Hapus curhat ini?", function(){ fetch(`${API_URL}?action=hapus_rasa&id_post=${id}&username=${currentUser.username}`).then(r=>r.json()).then(d=>{showToast(d.message);loadRasa();}); }); }
     function openKonseling() { let isGuru=currentUser.role==='Guru'; let form=isGuru?'':`<div class="p-3 bg-white rounded-4 shadow-sm mb-3 border"><h6 class="fw-bold mb-3">Buat Janji BK</h6><select id="kTuj" class="form-select mb-2"></select><input type="text" id="kWkt" class="form-control mb-2" placeholder="Hari, Tgl, Jam"><textarea id="kPerlu" class="form-control mb-2" rows="2" placeholder="Keperluan"></textarea><button class="btn btn-primary w-100 rounded-pill" onclick="krmKonsel()">AJUKAN</button></div>`; renderPage("Ruang Konseling", `${form}<div id="list-konsel" class="mt-3 scrollable-list">Loading...</div>`); if(!isGuru) loadGuruList('kTuj'); loadKonsel(); }
     function krmKonsel(){ submitGeneral("simpan_konseling", {tujuan_guru:getVal('kTuj'), tanggal_jam:getVal('kWkt'), keperluan:getVal('kPerlu')}, loadKonsel); }
-    function loadKonsel(){ fetch(API_URL+`?action=get_konseling&username=${currentUser.username}&role=${currentUser.role}&nama=${currentUser.nama}`).then(r=>r.json()).then(res=>{ let h=''; res.data.forEach(d=>{ let tm=formatCustomDate(d.waktu); let badge=d.status==='Menunggu'?'bg-warning':(d.status==='Diterima'?'bg-success':'bg-danger'); let action=currentUser.role==='Guru' && d.status==='Menunggu' ? `<div class="mt-2"><button class="btn btn-sm btn-success me-1" onclick="respKonsel('${d.id}','Diterima')">Terima</button><button class="btn btn-sm btn-danger" onclick="respKonsel('${d.id}','Ditolak')">Tolak</button></div>` : `<small class="d-block mt-1 text-muted">Info: ${d.balasan}</small>`; h+=`<div class="card card-custom p-3 mb-2 border-start border-4 border-primary"><div class="d-flex justify-content-between small text-muted mb-2"><span><i class="far fa-calendar-alt"></i> ${tm.date}</span><span><i class="far fa-clock"></i> ${tm.time}</span></div><div class="d-flex justify-content-between"><strong>${d.pemohon} -> ${d.guru}</strong><span class="badge ${badge}">${d.status}</span></div><p class="small m-0 mt-2">${d.keperluan}</p>${action}</div>`; }); document.getElementById('list-konsel').innerHTML=h||'<p class="text-center text-muted">Belum ada janji.</p>'; }); }
+    function loadKonsel(){ fetch(API_URL+`?action=get_konseling&username=${currentUser.username}&role=${currentUser.role}&nama=${currentUser.nama}`).then(r=>r.json()).then(res=>{ let h=''; res.data.forEach(d=>{ let tm=formatCustomDate(d.waktu); let badge=d.status==='Menunggu'?'bg-warning':(d.status==='Diterima'?'bg-success':'bg-danger'); let action=currentUser.role==='Guru' && d.status==='Menunggu' ? `<div class="mt-2"><button class="btn btn-sm btn-success me-1" onclick="respKonsel('${d.id}','Diterima')">Terima</button><button class="btn btn-sm btn-danger" onclick="respKonsel('${d.id}','Ditolak')">Tolak</button></div>` : `<small class="d-block mt-1 text-muted">Info: ${d.balasan}</small>`; let delBtn = (d.pemohon === currentUser.nama) ? `<i class="fas fa-trash text-secondary float-end" onclick="hapusKonseling('${d.id}')" style="cursor:pointer;" title="Hapus Riwayat"></i>` : ''; h+=`<div class="card card-custom p-3 mb-2 border-start border-4 border-primary"><div class="d-flex justify-content-between small text-muted mb-2"><span><i class="far fa-calendar-alt"></i> ${tm.date}</span><span><i class="far fa-clock"></i> ${tm.time}</span></div><div class="d-flex justify-content-between"><strong>${d.pemohon} -> ${d.guru}</strong>${delBtn}</div><div class="mt-1"><span class="badge ${badge}">${d.status}</span></div><p class="small m-0 mt-2">${d.keperluan}</p>${action}</div>`; }); document.getElementById('list-konsel').innerHTML=h||'<p class="text-center text-muted">Belum ada janji.</p>'; }); }
     function respKonsel(id, st){ let msg=prompt("Pesan tambahan (Lokasi/Info):", "Silakan datang ke ruang BK"); if(!msg)return; fetch(`${API_URL}?action=respon_konseling&id_post=${id}&status=${st}&balasan=${msg}`).then(r=>r.json()).then(d=>{showToast(d.message);loadKonsel();}); }
-    function openChat() { renderPage("Ruang Chat", `<div id="chat-contact-view"><p class="small text-muted mb-2">Pilih kontak:</p><div id="chat-contacts" class="list-group">Loading...</div></div><div id="chat-room-view" style="display:none;"><div class="d-flex align-items-center mb-3 p-2 bg-light rounded"><button class="btn btn-sm btn-secondary me-2" onclick="closeChatRoom()"><i class="fas fa-times"></i></button><strong id="chat-partner-name">Nama</strong></div><div id="chat-messages" style="height:300px;overflow-y:auto;background:#fff;border:1px solid #eee;border-radius:10px;padding:10px;mb-2"></div><div class="input-group mt-2"><input type="text" class="form-control" id="chat-input" placeholder="Tulis..."><button class="btn btn-primary" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button></div></div>`); fetch(`${API_URL}?action=get_chat_contacts&role=${currentUser.role}`).then(r=>r.json()).then(res=>{let h='';res.data.forEach(c=>h+=`<button class="list-group-item list-group-item-action" onclick="openChatRoom('${c}')"><i class="fas fa-user-circle me-2"></i> ${c}</button>`);document.getElementById('chat-contacts').innerHTML=h;}); }
+    function hapusKonseling(id){ confirmAction("Hapus riwayat konseling ini?", function(){ fetch(`${API_URL}?action=hapus_konseling&id_post=${id}&username=${currentUser.username}`).then(r=>r.json()).then(d=>{showToast(d.message);loadKonsel();}); }); }
+    function openChat() { renderPage("Ruang Chat", `<div id="chat-contact-view"><p class="small text-muted mb-2">Pilih kontak:</p><div id="chat-contacts" class="list-group">Loading...</div></div><div id="chat-room-view" style="display:none;"><div class="d-flex align-items-center justify-content-between mb-3 p-2 bg-light rounded"><div><button class="btn btn-sm btn-secondary me-2" onclick="closeChatRoom()"><i class="fas fa-times"></i></button><strong id="chat-partner-name">Nama</strong></div><button class="btn btn-sm btn-outline-danger" onclick="clearChat()"><i class="fas fa-trash"></i></button></div><div id="chat-messages" style="height:300px;overflow-y:auto;background:#fff;border:1px solid #eee;border-radius:10px;padding:10px;mb-2"></div><div class="input-group mt-2"><input type="text" class="form-control" id="chat-input" placeholder="Tulis..."><button class="btn btn-primary" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button></div></div>`); fetch(`${API_URL}?action=get_chat_contacts&role=${currentUser.role}`).then(r=>r.json()).then(res=>{let h='';res.data.forEach(c=>h+=`<button class="list-group-item list-group-item-action" onclick="openChatRoom('${c}')"><i class="fas fa-user-circle me-2"></i> ${c}</button>`);document.getElementById('chat-contacts').innerHTML=h;}); }
     let chatPartner=''; function openChatRoom(n){chatPartner=n;document.getElementById('chat-contact-view').style.display='none';document.getElementById('chat-room-view').style.display='block';document.getElementById('chat-partner-name').innerText=n;loadMessages();} function closeChatRoom(){document.getElementById('chat-contact-view').style.display='block';document.getElementById('chat-room-view').style.display='none';} function loadMessages(){document.getElementById('chat-messages').innerHTML='<small>Loading...</small>';fetch(`${API_URL}?action=get_chat&user1=${currentUser.nama}&user2=${chatPartner}`).then(r=>r.json()).then(res=>{let h='';res.data.forEach(m=>{let c=m.sender===currentUser.nama?'chat-me':'chat-other';h+=`<div class="d-flex flex-column"><div class="chat-bubble ${c}">${m.message}</div></div>`;});document.getElementById('chat-messages').innerHTML=h;});} function sendChat(){let m=document.getElementById('chat-input').value;if(!m)return;fetch(`${API_URL}?action=simpan_chat&sender=${currentUser.nama}&receiver=${chatPartner}&message=${m}`).then(()=>{document.getElementById('chat-input').value='';loadMessages();});}
+    function clearChat(){ confirmAction("Hapus SEMUA riwayat chat dengan "+chatPartner+"?", function(){ fetch(`${API_URL}?action=hapus_chat_history&user1=${currentUser.nama}&user2=${chatPartner}`).then(r=>r.json()).then(d=>{showToast(d.message);loadMessages();}); }); }
     function openMood() { if(currentUser.role === 'Orangtua') { showToast("Fitur khusus Siswa & Guru", 'error'); return; } renderPage("Mood & Kesan", `<div class="text-center mb-4"><p class="small text-muted">Bagaimana perasaanmu hari ini?</p><div class="mood-container"><i class="mood-icon fas fa-laugh-beam text-success" onclick="selMood(this,'Senang')"></i><i class="mood-icon fas fa-meh text-warning" onclick="selMood(this,'Biasa')"></i><i class="mood-icon fas fa-frown text-danger" onclick="selMood(this,'Sedih')"></i><i class="mood-icon fas fa-tired text-secondary" onclick="selMood(this,'Lelah')"></i></div><input type="hidden" id="f_mood"><input type="text" class="form-control mb-3 text-center" id="f_kesan" placeholder="Tulis kesan singkat..." required style="border-radius:25px;"><button class="btn btn-primary w-100 rounded-pill shadow" onclick="submitMood()">UPDATE STATUS</button></div><hr>${currentUser.role==='Guru'?'<h6 class="fw-bold small">Mood Siswa Hari Ini</h6><div id="list-mood-guru" class="scrollable-list"></div>':''}`); if(currentUser.role==='Guru') loadMoodGuru(); }
     function selMood(e,v){document.querySelectorAll('.mood-icon').forEach(x=>x.classList.remove('mood-selected'));e.classList.add('mood-selected');document.getElementById('f_mood').value=v;} 
     function submitMood(){let m=document.getElementById('f_mood').value,k=document.getElementById('f_kesan').value;if(!m||!k){showToast("Isi mood & kesan!", 'error');return;}setLoading(true);fetch(`${API_URL}?action=simpan_mood&username=${currentUser.username}&nama=${currentUser.nama}&mood=${m}&kesan=${k}`).then(r=>r.json()).then(res=>{setLoading(false);showToast(res.message, 'success');currentUser.kesan=k;initDashboard();goBack();});} 
@@ -370,6 +374,18 @@
         document.getElementById('notif-list-content').innerHTML = listHtml;
     }
     function toggleNotifDropdown() { let d = document.getElementById('notif-dropdown'); d.style.display = (d.style.display === 'block') ? 'none' : 'block'; }
+    function markAllRead() {
+        setLoading(true);
+        fetch(`${API_URL}?action=mark_notif_read&username=${currentUser.username}`)
+        .then(r=>r.json()).then(res => {
+            setLoading(false);
+            if(res.status === 'success') {
+                document.getElementById('bell-badge').style.display='none';
+                document.querySelectorAll('.menu-badge').forEach(b => b.style.display='none');
+                document.getElementById('notif-list-content').innerHTML = '<div class="p-3 text-center text-muted small">Tidak ada notifikasi baru</div>';
+            }
+        });
+    }
 
     function openPengembang() { 
         let html = `
